@@ -71,6 +71,13 @@ describe("get_obligations", () => {
     });
   });
 
+  it("passes each source's note through with the citation", async () => {
+    // ADR 0001: some notes are legal caveats, so they are never trimmed.
+    const de = body(await client.callTool({ name: "get_obligations", arguments: { country: "DE" } }));
+    const mlbf = de.claims.supervisoryAuthority.citations.find((c: any) => c.source.id === "mlbf-about");
+    expect(mlbf.source.note).toMatch(/Not a designating provision/);
+  });
+
   it("never returns a claim without a citation", async () => {
     for (const country of ["EU", "SE", "DE", "ES"]) {
       const file = body(await client.callTool({ name: "get_obligations", arguments: { country } }));

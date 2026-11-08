@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- PLANTED html-lang-valid (3.1.1): lang value is not a language. -->
+<html lang="xx-shop">
+<head>
+  <meta charset="utf-8" />
+  <title>Cart | Test Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="broken">
+  <main>
+    <h1>Your cart</h1>
+    <table>
+      <tr><th id="item">Item</th><th id="qty">Quantity</th><th id="price">Price</th><th></th></tr>
+      <tr>
+        <td headers="item">Linen shirt</td>
+        <!-- PLANTED label (4.1.2): quantity field with no label. -->
+        <td headers="qty"><input type="number" value="1" /></td>
+        <!-- PLANTED td-headers-attr (1.3.1): headers points at an id that does not exist. -->
+        <td headers="cost">€49.00</td>
+        <!-- PLANTED link-name (2.4.4, 4.1.2): remove link is an empty icon. -->
+        <td><a href="#remove"><span class="icon-x"></span></a></td>
+      </tr>
+    </table>
+    <form>
+      <label for="coupon">Coupon code</label>
+      <input id="coupon" type="text" />
+      <!-- PLANTED input-image-alt (1.1.1, 4.1.2): image submit button with no alt. -->
+      <input type="image" src="apply.svg" />
+    </form>
+    <a class="btn" href="checkout.html">Checkout</a>
+  </main>
+</body>
+</html>

@@ -83,9 +83,11 @@ on a missing quote and never edits the data. The German federal gazette serves
 PDFs through a JavaScript viewer, so that source is marked for a person to check
 instead of being skipped silently.
 
-The tests add rules a schema cannot: every citation names a listed source, every
-non-English quote has a translation, quotes stay under 30 words, no source was
-retrieved more than a year ago, and nothing outside the EU is filed under the EAA.
+A file only loads if every citation names a listed source, every source is cited
+and every non-English quote has a translation; a broken file fails with every
+problem listed at once. The tests add the rules that depend on the date or on
+judgement: quotes stay under 30 words, no source was retrieved more than a year
+ago, and nothing outside the EU is filed under the EAA.
 
 ## The MCP server
 
@@ -187,9 +189,18 @@ produced, and the gates a report passes before it can be signed.
 npm test
 ```
 
-86 tests, including real Chromium scans of local fixtures with planted defects,
-and contract tests that drive the server through an MCP client. The scan tests
-need `npx playwright install chromium` once; nothing else needs the network.
+91 tests, including contract tests that drive the server through an MCP client,
+and real Chromium scans of a five-page test shop with planted defects
+([`examples/test-shop/`](examples/test-shop)). The scan tests need
+`npx playwright install chromium` once; nothing else needs the network.
+
+```bash
+npm run try -- --w3c
+```
+
+runs the whole thing through the stdio server: the test shop against its
+[`expected.json`](examples/test-shop/expected.json), plus W3C's Before and After
+Demonstration site. The output is in [`examples/RESULTS.md`](examples/RESULTS.md).
 
 ## Related work
 

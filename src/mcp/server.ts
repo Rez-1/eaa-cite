@@ -3,14 +3,14 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { criteria, criteriaFile, findCriterion } from "../criteria/index.js";
 import {
-  dataset,
+  claimIdSchema,
+  compareClaim,
   getJurisdiction,
   harmonisationFor,
   PUBLISHED,
+  rawJurisdictionFile,
   UnknownJurisdictionError,
-  type ClaimId,
-  type Citation,
-  type JurisdictionFile,
+  type CitedJurisdiction,
 } from "../dataset/index.js";
 import { mapToClauses, type AxeRun, type ClauseReport } from "../scan/map.js";
 import { conformanceStatement } from "../standards/harmonisation.js";
@@ -33,19 +33,6 @@ export type Scanner = {
 
 export type ServerOptions = { scanner: Scanner; version?: string };
 
-const CLAIM_IDS = [
-  "applicationDate",
-  "transpositionDeadline",
-  "microenterpriseExemption",
-  "microenterpriseDefinition",
-  "presumptionOfConformity",
-  "nationalStandardReference",
-  "supervisoryAuthority",
-  "penalties",
-  "transitionalServiceContracts",
-  "transitionalSelfServiceTerminals",
-] as const satisfies readonly ClaimId[];
-
 const country = z
   .string()
   .min(2)
@@ -59,37 +46,14 @@ function failure(message: string): CallToolResult {
   return { isError: true, content: [{ type: "text", text: message }] };
 }
 
-/** Joins each citation to its source, so the caller gets a URL and a date with every quote. */
-function withSources(file: JurisdictionFile, citations: readonly Citation[]) {
-  return citations.map((citation) => {
-    const source = file.sources.find((s) => s.id === citation.source);
-    if (!source) throw new Error(`${file.jurisdiction}: citation names unknown source ${citation.source}`);
-    return {
-      ...citation,
-      source: { title: source.title, identifier: source.identifier, url: source.url, language: source.language, retrievedAt: source.retrievedAt },
-    };
-  });
-}
-
-function obligations(file: JurisdictionFile) {
-  const claims = Object.fromEntries(
-    Object.entries(file.claims).map(([id, claim]) => [
-      id,
-      claim && { value: claim.value, ...(claim.note ? { note: claim.note } : {}), citations: withSources(file, claim.citations) },
-    ]),
-  );
-  const harmonisation = harmonisationFor(file.jurisdiction);
+function obligations(file: CitedJurisdiction) {
+  const { status, basis, checkedAt, citations } = harmonisationFor(file.jurisdiction);
   return {
     jurisdiction: file.jurisdiction,
     name: file.name,
     instrument: file.instrument,
-    claims,
-    harmonisation: {
-      status: harmonisation.status,
-      basis: harmonisation.basis,
-      checkedAt: harmonisation.checkedAt,
-      citations: harmonisation.citations.map((c) => withSources(dataset[c.jurisdiction], [c])[0]),
-    },
+    claims: file.claims,
+    harmonisation: { status, basis, checkedAt, citations },
     unverified: file.unverified,
   };
 }
@@ -136,17 +100,10 @@ export function createServer(options: ServerOptions): McpServer {
       description:
         "One claim, such as penalties or the self-service terminal transition, side by side for every published " +
         "jurisdiction, each with its citations. Jurisdictions whose data has no value for the claim are listed under `absent`.",
-      inputSchema: { claim: z.enum(CLAIM_IDS).describe("Which rule to compare.") },
+      inputSchema: { claim: claimIdSchema.describe("Which rule to compare.") },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    async ({ claim }) => {
-      const rows = PUBLISHED.flatMap((code) => {
-        const file = dataset[code];
-        const entry = file.claims[claim];
-        return entry ? [{ jurisdiction: code, value: entry.value, citations: withSources(file, entry.citations) }] : [];
-      });
-      return json({ claim, rows, absent: PUBLISHED.filter((code) => !dataset[code].claims[claim]) });
-    },
+    async ({ claim }) => json(compareClaim(claim)),
   );
 
   server.registerTool(
@@ -172,7 +129,7 @@ export function createServer(options: ServerOptions): McpServer {
           ...statement,
           status: harmonisation.status,
           checkedAt: harmonisation.checkedAt,
-          citations: harmonisation.citations.map((c) => withSources(dataset[c.jurisdiction], [c])[0]),
+          citations: harmonisation.citations,
         });
       } catch (error) {
         if (error instanceof UnknownJurisdictionError) return failure(error.message);
@@ -246,14 +203,14 @@ export function createServer(options: ServerOptions): McpServer {
       list: async () => ({
         resources: PUBLISHED.map((code) => ({
           uri: `eaa://jurisdictions/${code.toLowerCase()}`,
-          name: `${dataset[code].name}: ${dataset[code].instrument}`,
+          name: `${getJurisdiction(code).name}: ${getJurisdiction(code).instrument}`,
           mimeType: "application/json",
         })),
       }),
     }),
     { title: "Jurisdiction data file", description: "The raw data file for one jurisdiction, as checked in.", mimeType: "application/json" },
     async (uri, { code }) => ({
-      contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(getJurisdiction(String(code)), null, 2) }],
+      contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(rawJurisdictionFile(String(code)), null, 2) }],
     }),
   );
 

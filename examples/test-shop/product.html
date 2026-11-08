@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- PLANTED meta-viewport (1.4.4): pinch zoom disabled. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Linen shirt | Test Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="broken">
+  <main>
+    <h1>Linen shirt</h1>
+    <!-- PLANTED image-alt (1.1.1): two product photos with no alt. -->
+    <img src="shirt-front.svg" width="300" height="300" />
+    <img src="shirt-back.svg" width="300" height="300" />
+    <!-- PLANTED color-contrast (1.4.3): price in light grey. -->
+    <p class="faint">€49.00</p>
+    <!-- PLANTED select-name (4.1.2): size picker with no label. -->
+    <select name="size"><option>S</option><option>M</option><option>L</option></select>
+    <!-- PLANTED, not detectable by axe (2.1.1): colour swatches are divs with click handlers, unreachable by keyboard. -->
+    <div class="grid">
+      <div style="width:32px;height:32px;background:#f5f0e6" onclick="this.style.outline='2px solid'"></div>
+      <div style="width:32px;height:32px;background:#2b3a55" onclick="this.style.outline='2px solid'"></div>
+    </div>
+    <!-- PLANTED button-name (4.1.2): add-to-cart button with only an icon. -->
+    <button type="button"><svg width="16" height="16" aria-hidden="true"><rect width="16" height="16" /></svg></button>
+    <!-- PLANTED, axe cannot decide (1.2.2): product video with no captions track. -->
+    <video src="promo.mp4" controls width="320"></video>
+  </main>
+</body>
+</html>

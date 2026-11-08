@@ -29,7 +29,8 @@
     "build:criteria": "tsx scripts/build-criteria.ts",
     "verify-sources": "tsx scripts/verify-sources.ts",
     "demo": "tsx scripts/demo.ts",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "try": "tsx scripts/try-test-shop.ts"
   },
   "keywords": [
     "accessibility",

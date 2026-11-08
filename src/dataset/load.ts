@@ -1,0 +1,158 @@
+import {
+  jurisdictionFileSchema,
+  type Citation,
+  type Claims,
+  type ClaimId,
+  type Jurisdiction,
+  type JurisdictionFile,
+  type Source,
+} from "./schema.js";
+
+/**
+ * Reads one jurisdiction file and turns it into the form every caller uses:
+ * each citation carries its full source instead of a source id.
+ *
+ * A file that breaks the structural rules of ADR 0001 does not load. The rules
+ * that depend on the date or on editorial judgement (quote length, source age,
+ * official domains) are tests, not load checks: a load check on age would stop
+ * the published package working a year after release.
+ */
+
+/** A citation with its source filled in. */
+export type ResolvedCitation = Omit<Citation, "source"> & { source: Source };
+
+/**
+ * Swaps a claim's citations for resolved ones; leaves everything else as it is.
+ * It distributes over unions, so an optional claim (`X | undefined`) stays optional.
+ */
+type Cite<C> = C extends { citations: Citation[] } ? Omit<C, "citations"> & { citations: ResolvedCitation[] } : C;
+
+export type CitedClaims = { [K in keyof Claims]: Cite<Claims[K]> };
+
+/** A jurisdiction file as callers see it: same content, citations resolved. */
+export type CitedJurisdiction = Omit<JurisdictionFile, "claims" | "harmonisation"> & {
+  claims: CitedClaims;
+  harmonisation?: Cite<NonNullable<JurisdictionFile["harmonisation"]>>;
+};
+
+/** Where a citation sits in a file: a claim id, or the EU harmonisation block. */
+export type CitationPlace = ClaimId | "harmonisation";
+
+export class DatasetIntegrityError extends Error {
+  constructor(
+    readonly file: string,
+    readonly problems: readonly string[],
+  ) {
+    super(`${file} does not load:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
+    this.name = "DatasetIntegrityError";
+  }
+}
+
+/** One citation and where it sits, with the path an editor would look for. */
+export type CitationEntry<C = ResolvedCitation> = { place: CitationPlace; path: string; citation: C };
+
+type HasCitations<C> = { citations: readonly C[] } | undefined;
+
+/**
+ * Every citation in a file, raw or cited: its claims, then the EU harmonisation
+ * block. The one place that knows where citations live, so a new
+ * citation-bearing field is added here and nowhere else.
+ */
+export function walkCitations<C>(file: { claims: Record<string, HasCitations<C>>; harmonisation?: HasCitations<C> }): CitationEntry<C>[] {
+  const entries: CitationEntry<C>[] = [];
+  for (const [id, claim] of Object.entries(file.claims)) {
+    claim?.citations.forEach((citation, i) =>
+      entries.push({ place: id as ClaimId, path: `claims.${id}.citations[${i}]`, citation }),
+    );
+  }
+  file.harmonisation?.citations.forEach((citation, i) =>
+    entries.push({ place: "harmonisation", path: `harmonisation.citations[${i}]`, citation }),
+  );
+  return entries;
+}
+
+type RawEntry = CitationEntry<Citation>;
+
+/**
+ * The structural rules. Each returns the problems it found; an empty list
+ * means the rule holds. Adding a rule is adding an entry here.
+ */
+const RULES: readonly ((file: JurisdictionFile, citations: readonly RawEntry[], expected?: Jurisdiction) => string[])[] = [
+  // data/jurisdictions/se.json must be Sweden's file, not a copy of another.
+  function fileIsForItsJurisdiction(file, _citations, expected) {
+    return expected && file.jurisdiction !== expected
+      ? [`jurisdiction: declares ${file.jurisdiction}, but the file is for ${expected}`]
+      : [];
+  },
+
+  // Two sources with one id would make every citation of that id ambiguous.
+  function sourceIdsAreUnique(file) {
+    const seen = new Set<string>();
+    return file.sources.flatMap((s) => {
+      if (seen.has(s.id)) return [`sources: id "${s.id}" is listed twice`];
+      seen.add(s.id);
+      return [];
+    });
+  },
+
+  // A citation must say where its quote can be checked (ADR 0001).
+  function citationsNameListedSources(file, citations) {
+    const ids = new Set(file.sources.map((s) => s.id));
+    return citations
+      .filter((e) => !ids.has(e.citation.source))
+      .map((e) => `${e.path}: names source "${e.citation.source}", which is not listed`);
+  },
+
+  // A source nothing cites is either dead weight or a citation that was lost.
+  function everySourceIsCited(file, citations) {
+    const cited = new Set(citations.map((e) => e.citation.source));
+    return file.sources.filter((s) => !cited.has(s.id)).map((s) => `sources: "${s.id}" is never cited`);
+  },
+
+  // A reader must be able to check a Swedish quote without reading Swedish.
+  function foreignQuotesAreTranslated(file, citations) {
+    const language = new Map(file.sources.map((s) => [s.id, s.language]));
+    return citations
+      .filter((e) => (language.get(e.citation.source) ?? "en") !== "en" && !e.citation.translation)
+      .map((e) => `${e.path}: quote is in ${language.get(e.citation.source)} and has no translation`);
+  },
+];
+
+/**
+ * Parses and checks one file. `expected` is the jurisdiction the file is
+ * named for; a file declaring another one is rejected. Throws one
+ * DatasetIntegrityError listing every problem found, so a hand edit can be
+ * fixed in one pass.
+ */
+export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): CitedJurisdiction {
+  const label = expected ? `jurisdictions/${expected.toLowerCase()}.json` : "jurisdiction file";
+
+  const parsed = jurisdictionFileSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new DatasetIntegrityError(
+      label,
+      parsed.error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`),
+    );
+  }
+  const file = parsed.data;
+
+  const citations = walkCitations(file);
+  const problems = RULES.flatMap((rule) => rule(file, citations, expected));
+  if (problems.length > 0) throw new DatasetIntegrityError(label, problems);
+
+  const sources = new Map(file.sources.map((s) => [s.id, s]));
+  const resolve = (citation: Citation): ResolvedCitation => ({ ...citation, source: sources.get(citation.source)! });
+
+  // TypeScript cannot follow a per-key rewrite through Object.entries, hence
+  // the cast; the rules above guarantee every source lookup succeeds.
+  const claims = Object.fromEntries(
+    Object.entries(file.claims).map(([id, claim]) => [id, claim && { ...claim, citations: claim.citations.map(resolve) }]),
+  ) as CitedClaims;
+
+  const { harmonisation, ...rest } = file;
+  return {
+    ...rest,
+    claims,
+    ...(harmonisation ? { harmonisation: { ...harmonisation, citations: harmonisation.citations.map(resolve) } } : {}),
+  };
+}

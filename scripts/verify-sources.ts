@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { dataset, PUBLISHED, type Citation, type JurisdictionFile, type Source } from "../src/dataset/index.js";
+import { citationsOf, getJurisdiction, PUBLISHED, type CitedJurisdiction, type ResolvedCitation, type Source } from "../src/dataset/index.js";
 import { findQuote, readableText } from "../src/dataset/quotes.js";
 
 /**
@@ -27,16 +27,6 @@ type Result = {
   error?: string;
 };
 
-function citationsBySource(file: JurisdictionFile): Map<string, { claim: string; citation: Citation }[]> {
-  const out = new Map<string, { claim: string; citation: Citation }[]>();
-  const add = (claim: string, citation: Citation): void => {
-    out.set(citation.source, [...(out.get(citation.source) ?? []), { claim, citation }]);
-  };
-  for (const [id, claim] of Object.entries(file.claims)) for (const c of claim?.citations ?? []) add(id, c);
-  for (const c of file.harmonisation?.citations ?? []) add("harmonisation", c);
-  return out;
-}
-
 /** Decodes with the charset the server declares; gesetze-im-internet.de is ISO-8859-1. */
 async function fetchText(url: string): Promise<{ text: string; sha256: string }> {
   const response = await fetch(url, {
@@ -55,7 +45,7 @@ async function fetchText(url: string): Promise<{ text: string; sha256: string }>
   };
 }
 
-async function verifySource(file: JurisdictionFile, source: Source, cited: { claim: string; citation: Citation }[]): Promise<Result> {
+async function verifySource(file: CitedJurisdiction, source: Source, cited: { claim: string; citation: ResolvedCitation }[]): Promise<Result> {
   const base = { jurisdiction: file.jurisdiction, source: source.id, url: source.url };
   if (source.verify === "manual") return { ...base, status: "manual" };
   try {
@@ -73,9 +63,9 @@ async function verifySource(file: JurisdictionFile, source: Source, cited: { cla
 async function main(): Promise<void> {
   const json = process.argv.includes("--json");
   const jobs = PUBLISHED.flatMap((code) => {
-    const file = dataset[code];
-    const bySource = citationsBySource(file);
-    return file.sources.map((source) => () => verifySource(file, source, bySource.get(source.id) ?? []));
+    const file = getJurisdiction(code);
+    const citations = citationsOf(code);
+    return file.sources.map((source) => () => verifySource(file, source, citations.filter((e) => e.citation.source.id === source.id).map((e) => ({ claim: e.place, citation: e.citation }))));
   });
 
   // One request at a time per run: these are public-service sites.

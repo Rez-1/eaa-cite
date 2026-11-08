@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Checkout | Test Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="broken">
+  <main>
+    <h1>Checkout</h1>
+    <!-- PLANTED, not detectable by axe (1.4.1): required fields are shown only by red text. -->
+    <p>Fields in <span class="required">red</span> are required.</p>
+    <form>
+      <p class="required">Email</p>
+      <!-- PLANTED label (4.1.2) and autocomplete-valid (1.3.5): no label, and an invalid autocomplete token. -->
+      <input type="email" name="email" autocomplete="electronic-mail" />
+      <p>Postcode</p>
+      <!-- PLANTED label (4.1.2): no label. -->
+      <input type="text" name="postcode" />
+      <!-- PLANTED aria-required-attr (4.1.2): custom checkbox without aria-checked. -->
+      <span role="checkbox" tabindex="0">Subscribe to the newsletter</span>
+      <!-- PLANTED frame-title (4.1.2): payment iframe with no title. -->
+      <iframe srcdoc="<p>Card number</p>" width="300" height="80"></iframe>
+      <!-- PLANTED, not detectable by axe (3.3.1): the error is a red border with no text. -->
+      <input type="text" name="card" aria-label="Card number" style="border:2px solid #d00" />
+      <button type="submit">Pay</button>
+    </form>
+  </main>
+</body>
+</html>

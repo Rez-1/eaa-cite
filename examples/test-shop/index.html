@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<!-- PLANTED html-has-lang (3.1.1): no lang attribute. -->
+<head>
+  <meta charset="utf-8" />
+  <!-- PLANTED document-title (2.4.2): no <title>. -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="broken">
+  <header>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="product.html">Shirts</a>
+      <!-- PLANTED link-name (2.4.4, 4.1.2): icon-only link with no accessible name. -->
+      <a href="cart.html"><svg width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="8" /></svg></a>
+    </nav>
+  </header>
+  <main>
+    <!-- PLANTED image-alt (1.1.1): hero image with no alt. -->
+    <img src="hero.svg" width="600" height="200" />
+    <!-- PLANTED color-contrast (1.4.3): light grey on white. -->
+    <p class="faint">Free shipping on orders over 50 euros.</p>
+    <!-- PLANTED, not detectable by axe (2.2.2): banner text rotates every 2 s with no pause control. -->
+    <p id="ticker">New arrivals every week</p>
+    <script>
+      const messages = ["New arrivals every week", "Linen season is here", "Members save 10%"];
+      let i = 0;
+      setInterval(() => { document.getElementById("ticker").textContent = messages[++i % messages.length]; }, 2000);
+    </script>
+    <h2>Popular</h2>
+    <div class="grid">
+      <div class="card"><a href="product.html">Linen shirt</a></div>
+      <div class="card"><a href="product.html">Cotton tee</a></div>
+    </div>
+  </main>
+</body>
+</html>

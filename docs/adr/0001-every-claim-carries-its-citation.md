@@ -4,10 +4,18 @@ Each value in `data/jurisdictions/*.json` sits inside a claim, and a claim has a
 least one citation: a source id, a pinpoint (article, paragraph, point), a
 verbatim quote in the source's language, and an English translation when the
 source is not in English. The Zod schema in `src/dataset/schema.ts` makes a value
-without a citation unrepresentable. The tests in `test/dataset.test.ts` add the
-rules a schema cannot express: every citation names a listed source, every source
-is cited, quotes stay under 30 words, and nothing was retrieved more than a year
-ago.
+without a citation unrepresentable.
+
+`parseJurisdictionFile` (`src/dataset/load.ts`) adds the structural rules a schema
+cannot express, and a file that breaks them does not load: every citation names a
+listed source, every source is cited, source ids are unique, non-English quotes are
+translated, and the file declares the jurisdiction it is named for. Callers only
+ever see citations with their source filled in.
+
+The rules that depend on the date or on judgement stay in `test/dataset.test.ts`:
+quotes under 30 words, nothing retrieved more than a year ago, official domains
+only. A load check on age would stop the published package working a year after
+release.
 
 ## Why a link per law is not enough
 
@@ -43,3 +51,13 @@ goes in the file's `unverified` list instead of a claim. For example, the Lände
 treaty that founds Germany's market surveillance body is published in Land
 gazettes, and no official federal page names it, so the dataset cites the body's
 own description of itself and says so.
+
+## Why callers get the whole source
+
+Every citation a caller reads, including MCP tool output, carries its full source:
+kind, verification mode and the editor's note as well as title, URL and date. Some
+of those notes are housekeeping ("the page is ISO-8859-1 encoded"), and trimming
+them was considered. They stay, because others are legal caveats a reader needs
+next to the quote: the MLBF source is noted as the authority describing itself, not
+a provision designating it. Deciding per note which ones an agent may see would be
+a judgement made in code, out of sight of whoever reads the answer.
