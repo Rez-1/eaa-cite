@@ -23,7 +23,7 @@ Unit tests sit next to their module as `*.test.ts`.
 
 | Script | Command | What it does |
 |---|---|---|
-| `build-criteria.ts` | `npm run build:criteria` | downloads the ETSI PDF and WCAG 2.1, parses both, writes the criteria table |
+| `build-criteria.ts` | `npm run build:criteria` | downloads the ETSI PDF and WCAG 2.1, parses both with `lib/criteriaSource.ts`, writes the criteria table |
 | `verify-sources.ts` | `npm run verify-sources` | re-reads every source and checks each quote ([docs/verification.md](verification.md)) |
 | `demo.ts` | `npm run demo` | starts the server over stdio and calls three tools |
 | `try-test-shop.ts` | `npm run try` | scans the test shop through the server and writes `examples/RESULTS.md` |
@@ -81,9 +81,10 @@ someone reviews.
 
 ### criteria
 
-`src/criteria/`. `source.ts` parses the EN 301 549 text and the WCAG 2.1
-Recommendation and refuses any disagreement between them. `index.ts` loads the
-checked-in table and offers `findCriterion`. The table holds clause numbers and
+`src/criteria/index.ts` loads the checked-in table, validates it and offers
+`findCriterion`. The table is built by `scripts/build-criteria.ts`, whose parsers
+(`scripts/lib/criteriaSource.ts`) read the EN 301 549 text and the WCAG 2.1
+Recommendation and refuse any disagreement between them. The table holds clause numbers and
 W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi-text.md)).
 
 ### scan
@@ -96,7 +97,7 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
   its caveat. Each scan has a deadline and reports errors in one line. It also
   holds `assertScannableUrl`, which refuses anything but http and https, and
   `openWithRedirectRule`, which applies the redirect rule
-  ([tools.md](tools.md#scan_url)) and refuses popups.
+  ([usage.md](usage.md#what-scan_url-may-load)) and refuses popups.
 - `fetchDocument.ts`: fetches each main-frame document in Node, without
   following redirects and with a 20 MB cap, so the browser never receives an
   unbounded body.
@@ -105,9 +106,10 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
 - `axeTags.ts`: reads WCAG numbers out of axe rule tags.
 - `map.ts`: `mapToClauses` sorts an axe result into failing, needs review and
   not checked by axe. It is pure, so it is tested without a browser.
-- `index.ts`: the `eaa-cite/scan` entry. The package root takes only `map.ts`
-  from this module, so importing the dataset does not load Playwright;
-  `test/entry.test.ts` fails if it ever does.
+- `index.ts` and `browser.ts`: the two package entries. `eaa-cite/scan` is the
+  pure part (`axeTags.ts`, `map.ts`); `eaa-cite/scan/browser` is the scanner and
+  the only entry that loads Playwright. `test/entry.test.ts` fails if Playwright
+  becomes reachable from the root, `scan` or `criteria` entries.
 
 ### cli
 
@@ -131,21 +133,13 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
 - `bin.ts`: the stdio entry point. Passes `createScanner()` to the server and
   closes it on shutdown. Lookups never start a browser.
 
-### guarded
+## Seam
 
-`src/guarded/`. A spend-capped wrapper for structured LLM calls. Nothing else in
-the repo imports it, and the server calls no model. It is a sample with no
-stability promise. See [docs/guarded.md](guarded.md).
-
-## Seams
-
-Three interfaces where a different implementation can be plugged in:
+One interface where a different implementation can be plugged in:
 
 | Seam | Defined in | Used for |
 |---|---|---|
 | `Scanner` | `src/scan/scanner.ts` | the server's scan tools. `bin.ts` passes `createScanner()`; the MCP tests pass a fake that returns a fixed scan report. A second scan engine would be another `Scanner` ([ADR 0002](adr/0002-axe-core-is-the-only-scanner.md)). |
-| `SpendLedger` | `src/guarded/ledger.ts` | where `runStructured` records runs and reads spend back. Ships as `MemoryLedger` and `JsonlLedger`. `ledgerContract` (`src/guarded/ledger.contract.ts`) is the test a new ledger must pass. |
-| `ModelClient` | `src/guarded/run.ts` | the model provider behind `runStructured`. Ships as `anthropicClient`. |
 
 ## Testing approach
 
@@ -171,7 +165,6 @@ Three interfaces where a different implementation can be plugged in:
 3. [Harmonisation status has three values and is recorded once, at EU level](adr/0003-harmonisation-status-has-three-values.md): keeps the EAA apart from the Web Accessibility Directive.
 4. [An axe pass is not an evaluation of a criterion](adr/0004-an-axe-pass-is-not-an-evaluation.md): why scans have no "passed" list.
 5. [Publish clause numbers, not ETSI's text](adr/0005-publish-clause-numbers-not-etsi-text.md): what the criteria table holds and why.
-6. [Spend caps are code, not prompt instructions](adr/0006-spend-caps-are-code.md): how `eaa-cite/guarded` limits spend.
 
 ## Where this came from
 
