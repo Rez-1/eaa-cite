@@ -38,7 +38,6 @@ For each page it records:
 | `failing` | axe rule id, mapped to the EN clauses it must be filed under |
 | `needsReview` | EN clauses axe should mark as undecided |
 | `notDetectable` | planted defects axe has no rule for, by WCAG number |
-
 | `needsReviewUnplanted` | needs-review clauses the first scan found that nobody planted (checkout's 9.2.4.1, Bypass Blocks) |
 
 `expected.json` is itself checked against the pages: each page's `failing`,
@@ -74,9 +73,10 @@ Does the same, then also scans W3C WAI's
 [Before and After Demonstration](https://www.w3.org/WAI/demos/bad/). That site
 publishes four pages (home, news, tickets, survey) twice: once with known
 barriers ("before") and once repaired ("after"). There is no `expected.json` for
-it. The output is a table of failing criteria and instances for each page before
-and after, and the list of what still fails after the repair. This needs network
-access to `www.w3.org`.
+it; the check is that "after" fails far less than "before". The output is a table
+of failing criteria and instances for each page before and after, and the list
+of what still fails after the repair. This needs network access to
+`www.w3.org`.
 
 Both commands overwrite `RESULTS.md`.
 
@@ -88,6 +88,7 @@ The same test-shop comparison also runs in `npm test`
 [`RESULTS.md`](RESULTS.md) is generated, not written by hand. The checked-in copy
 was made with `npm run try -- --w3c` on 2026-11-08: every page matched
 `expected.json`, every defect planted without an axe rule was listed as not
-checked by axe, and each W3C "after" page had no clause 9 failures.
+checked by axe, each W3C "before" page failed four or five clause 9 criteria,
+and each "after" page failed none.
 
 How to read the results: [docs/results.md](../docs/results.md).

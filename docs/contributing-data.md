@@ -12,9 +12,9 @@ such as claim, citation and pinpoint are defined in [CONTEXT.md](../CONTEXT.md).
 Three things every change has to meet:
 
 - Official sources only. A source is an official document: the law on an
-  official legislation site (EUR-Lex, riksdagen.se, gesetze-im-internet.de,
-  boe.es), an official gazette, a European Commission page, or a supervisory
-  authority's own site. Blogs, law firm notes, news articles and secondary
+  official legislation site, an official gazette, a European Commission page, or
+  a supervisory authority's own site. The permitted hosts are listed in
+  `src/dataset/officialHosts.ts`. Blogs, law firm notes, news articles and secondary
   databases are not sources, even when they are right. Use them to find the law,
   then cite the law.
 - Quotes are verbatim. Copy the exact words from the source, in its language,
@@ -86,8 +86,9 @@ The checks then run on GitHub for you:
   described in the next section.
 - `verify-sources` runs because the pull request touches `data/`. It fetches
   every source and checks every quote is still there, including yours. Sources
-  on www.gesetze-im-internet.de are skipped there, because the site drops
-  connections from GitHub; the maintainer checks a German change locally.
+  on www.gesetze-im-internet.de are skipped in CI
+  ([why](verification.md#the-monthly-job)); the maintainer checks a German change
+  locally.
 
 If this is your first pull request to the repository, the maintainer may need to
 approve the checks before they run. If a check fails, open it ("Details") to read
@@ -107,25 +108,18 @@ npm run verify-sources   # fetches every source and checks every quote
 `check-data` is the quickest: it checks just the file you edited and lists every
 problem, without running the whole test suite. See [cli.md](cli.md#check-data).
 
-If a file breaks a load rule, the test run stops with a `DatasetIntegrityError`
-that names the file and lists every problem at once:
-
-```
-jurisdictions/de.json does not load:
-  - claims.penalties.citations[0]: names source "bfsg-99", which is not listed
-  - sources: "bfsg-37" is never cited
-  - claims.microenterpriseExemption.citations[0]: quote is in de and has no translation
-```
-
-Each line starts with the path to the problem. `claims.penalties.citations[0]`
+If a file breaks a load rule, you get a `DatasetIntegrityError` that names the
+file and lists every problem at once, one per line
+([example](data-format.md#load-rules)). Each line starts with the path to the
+problem. `claims.penalties.citations[0]`
 is the first citation of the `penalties` claim (counting starts at 0).
 `sources.0.language` is the `language` of the first source. Fix every line,
 then run the tests again. The list of rules and their messages is in
 [data-format.md](data-format.md#load-rules).
 
-If a file matches the shape but breaks an editorial rule, `npm test` reports a
-failed test, for example a quote over 30 words or a source not on an official
-domain. See [data-format.md](data-format.md#editorial-rules).
+If a file loads but breaks an editorial rule, `npm test` reports a failed test,
+for example a quote over 30 words. See
+[data-format.md](data-format.md#editorial-rules).
 
 For what `verify-sources` reports, see [verification.md](verification.md).
 
@@ -157,14 +151,10 @@ To add a source, add an entry to the file's `sources` list:
 - Add a `note` for anything a reader should know, such as "The authority
   describing itself. Not a designating provision."
 
-Choose `verify`:
-
-- `quote` if the URL opens as a normal web page with the text on it. This is
-  almost always the right choice.
-- `manual` only if a script cannot read the page, for example a PDF served
-  through a JavaScript viewer. Say why in the `note`. A `manual` source is
-  re-checked by a person, so it is more work for everyone; prefer another
-  official URL for the same text if there is one.
+Choose `verify` ([data-format.md](data-format.md#quote-or-manual-verification)):
+`quote` almost always. Use `manual` only if a script cannot read the page, and
+say why in the `note`. A `manual` source is re-checked by a person, so prefer
+another official URL for the same text if there is one.
 
 Then cite it from a claim, by `id`:
 
@@ -180,9 +170,9 @@ Then cite it from a claim, by `id`:
 Every source must be cited at least once, and every citation must name a listed
 source. A file that breaks either rule does not load.
 
-A new website, even an official one, has to be added to the list of official
-domains in the tests. The maintainer does that; say in the pull request that the
-domain is new.
+A source on a new website, even an official one, does not load until its host
+is added to `src/dataset/officialHosts.ts`. The maintainer does that; say in the
+pull request that the host is new.
 
 ## Record something you could not confirm
 
@@ -202,8 +192,8 @@ confirmed" is more useful to a reader than a value nobody can check. See
 
 ## Add a jurisdiction
 
-Any EU member state can be added. Nothing outside the EU can, because the EAA is
-an EU directive. Start by opening a "New jurisdiction" issue
+Any EU member state can be added, and nothing outside the EU
+([data-format.md](data-format.md#allowed-jurisdiction-codes)). Start by opening a "New jurisdiction" issue
 (https://github.com/Rez-1/eaa-cite/issues/new/choose) so the work is not done
 twice.
 
@@ -268,15 +258,10 @@ uses.
 
 ### Checks before opening a pull request
 
-- The file loads (`npm run cli -- check-data <file>`): every citation names a
-  listed source, every source is cited and on an official host, every
-  non-English quote is translated, and `jurisdiction` matches the file name. See
-  [data-format.md](data-format.md#load-rules).
-- The editorial rules hold: quotes of 30 words or fewer and an `applicationDate`
-  of `2025-06-28`. See [data-format.md](data-format.md#editorial-rules).
-- Every quote is on its live page: `npm run verify-sources` reports `ok` for each
-  `quote` source. If you cannot run it, the `verify-sources` check on the pull
-  request does it for you.
+Run the three commands in [Check your change locally](#check-your-change-locally).
+The file must load, pass the editorial rules, and have every quote found on its
+live page. If you cannot run `verify-sources`, the check on the pull request does
+it for you.
 
 ## Review
 
@@ -286,13 +271,11 @@ review checks:
 - the source is official and the URL opens;
 - the pinpoint names the provision that states the value;
 - the quote is there, word for word;
-- the translation is faithful, and a machine translation is marked as one;
+- the translation is faithful, and a machine translation is marked as one
+  ([data-format.md](data-format.md#translations));
 - the value reads the quote correctly;
 - `retrievedAt` is the date the source was read;
 - anything left uncertain is in `unverified`, not in a claim.
-
-Machine translations are allowed if marked as such (in the citation's `note`) and
-reviewed before merge.
 
 When there is a disagreement about how to read the law, the primary text
 settles it. Arguments rest on the words of the law at the pinpoint, not on

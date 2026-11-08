@@ -91,8 +91,8 @@ error, not something to ignore. A misspelt optional field or claim id
 `AT BE BG CY CZ DE DK EE ES FI FR GR HR HU IE IT LT LU LV MT NL PL PT RO SE SI SK`
 
 Greece is `GR`, not `EL`. Nothing outside the EU is allowed: the EAA is an EU
-directive, so a UK or Norwegian law filed under it would be a category error,
-however similar it looks. The tests check that `GB` and `NO` are never published.
+directive, so a UK or Norwegian law is never filed under it, however similar it
+looks. The tests check that `GB` and `NO` are never published.
 
 Today four are published: `EU`, `SE`, `DE`, `ES`.
 
@@ -135,19 +135,17 @@ provision."
 
 ### quote or manual verification
 
-`verify` says how the source is re-checked.
+`verify` says how the source is re-checked
+([verification.md](verification.md)).
 
-- `quote`: `scripts/verify-sources.ts` fetches the URL and checks that every quote
-  citing this source is still in the text. Use this whenever the URL serves the
-  text as a normal web page.
+- `quote`: `verify-sources` fetches the URL and checks that every quote citing
+  this source is still in the text. Use this whenever the URL serves the text as
+  a normal web page.
 - `manual`: a script cannot read the URL, for example because the site serves
-  the document through a JavaScript viewer with session-bound links. The German
-  federal gazette (`bgbl-2021-i-2970`) is the one case today.
-
-`manual` does not mean "not checked". Every verification run lists the manual
-sources at the end, and a person must open each one, confirm each quote at its
-pinpoint, and update `retrievedAt`. Say in the source's `note` why a script
-cannot fetch it. See [verification.md](verification.md#a-manual-source-is-due).
+  the document through a JavaScript viewer with session-bound links. A person
+  re-checks it ([verification.md](verification.md#a-manual-source-is-due)). Say
+  in the source's `note` why a script cannot fetch it. The German federal
+  gazette (`bgbl-2021-i-2970`) is the one case today.
 
 ## Citations
 
@@ -205,10 +203,9 @@ For a web page with no numbered parts, name the page or the section heading:
 - Do not add words of your own inside the quote. Explanations go in the
   pinpoint, the claim's `note` or the citation's `note`.
 
-The checker reads the page as plain text. It drops markup, decodes entities,
-folds curly quotes to straight ones and en and em dashes to hyphens, and
-collapses whitespace. So typographic differences do not matter, but every word
-and number must match. Details are in [verification.md](verification.md).
+The checker reads the page as plain text, so markup and typographic differences
+(curly quotes, dashes, whitespace) do not matter, but every word and number must
+match ([verification.md](verification.md#how-the-check-works)).
 
 ### Translations
 
@@ -216,8 +213,8 @@ Every citation of a source whose `language` is not `en` needs a `translation`. A
 file without one does not load.
 
 Translations are written by whoever adds the citation. They are there so a
-reader can check the quote without reading the language. They are not official
-translations, and a report should cite the original.
+reader can check the quote without reading the language. They are unofficial,
+and a report should cite the original.
 
 Machine translations are allowed if they are marked as machine translations and
 reviewed before merge. Mark one in the citation's `note`, for example
@@ -441,7 +438,7 @@ EAA. It has three values:
 |---|---|
 | `cited` | The Commission has published a version's reference in the Official Journal under 2019/882. |
 | `not_cited` | It has not. EN 301 549 can still be used as a technical benchmark. |
-| `national_only` | No Official Journal citation, but the member state's own law names a version. |
+| `national_only` | No Official Journal citation, but the member state's own law names a version. That version governs there. A report still may not claim the presumption. |
 
 It is recorded once, in `eu.json`, as a top-level `harmonisation` block:
 
@@ -465,13 +462,11 @@ A member state's file must not have a `harmonisation` block. The member state
 takes the EU answer, unless its own `presumptionOfConformity` claim names an EN
 301 549 version, in which case it is `national_only` and cites its own law.
 
-The trap this guards against: EN 301 549 v3.2.1 is cited under the Web
-Accessibility Directive, 2016/2102, for public sector websites. That citation does
-not carry over to the EAA. As of 2026-11-08 no standard is cited under 2019/882,
-so the status is `not_cited`. If it is ever changed to `cited`, the tests require
-a `legislation` source among its citations: the Commission implementing decision
-itself. The full reasoning is in
-[ADR 0003](adr/0003-harmonisation-status-has-three-values.md).
+As of 2026-11-08 the status is `not_cited`. Why EN 301 549's citation under the
+Web Accessibility Directive (2016/2102) does not count is in
+[ADR 0003](adr/0003-harmonisation-status-has-three-values.md). Changing it to
+`cited` needs the Commission implementing decision as a `legislation` source
+([Editorial rules](#editorial-rules)).
 
 ## Conformance answer
 
@@ -574,9 +569,6 @@ These rules do not depend on the date or on judgement, so they can run every
 time the package loads. Quote length is judgement and is a test, below. Source
 age is checked by `verify-sources` ([verification.md](verification.md)): a load
 check or a test on the date would stop a copy working a year after release.
-
-Every object in the file is strict, so an unknown or misspelt key is also a load
-error.
 
 ## Editorial rules
 

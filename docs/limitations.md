@@ -7,15 +7,11 @@ What this project does not cover, and what its answers do not prove.
 eaa-cite is a research aid. It tells you what a law says and where it says it.
 It does not tell you what the law means for your site or your business.
 
-Before you rely on a value:
-
-1. Open the source URL in the citation.
-2. Find the pinpoint and check that the quote is there.
-3. Read the text around it. A quote under 30 words can miss a condition or an
-   exception in the next sentence.
-4. For a decision that matters, ask a lawyer qualified in that jurisdiction.
-
-[docs/results.md](results.md) shows how to read a citation and check it yourself.
+Check a value against its source before you rely on it
+([results.md](results.md#check-a-citation-yourself)), and read the text around
+the quote: a quote under 30 words can miss a condition or an exception in the
+next sentence. For a decision that matters, ask a lawyer qualified in that
+jurisdiction.
 
 ## Coverage
 
@@ -28,8 +24,8 @@ sector-specific services (banking, transport, e-books) are only partly covered.
 For example, the self-service terminal transition is recorded for EU, DE and ES,
 but no other product obligation is.
 
-Only EU member states can be added. The EAA is an EU directive, so a UK or
-Norwegian law is never filed under it.
+Only EU member states can be added
+([data-format.md](data-format.md#allowed-jurisdiction-codes)).
 
 ## Known gaps in the data
 
@@ -56,62 +52,30 @@ maximum. A region's own maximum may differ.
 
 ## Translations
 
-Every non-English quote has an English translation. The translations are
-unofficial. They exist so a reader can check that the quote supports the value
-without reading the source language. Cite the original text, not the translation.
+Every non-English quote has an unofficial English translation, for checking the
+quote. Cite the original text ([data-format.md](data-format.md#translations)).
 
 ## How fresh the data is
 
-- Each source has a `retrievedAt` date: the day someone read it. All sources in
-  this release were retrieved on 2026-11-08.
-- A conformance answer has a `checkedAt` date: the oldest `retrievedAt` among the
-  sources it cites. The answer is only as fresh as that.
-- A monthly job re-reads every source and fails if a quote is gone. It does not
-  catch a law changed in a place no quote covers. See
-  [docs/verification.md](verification.md).
-- The monthly job also flags any source retrieved more than 365 days ago, so
-  stale data opens an issue even if every quote is still there.
+All sources in this release were retrieved on 2026-11-08. A conformance answer
+is dated by its oldest source (`checkedAt`).
 
-A law can change on any day. Between two runs of the monthly job, the data can be
-up to a month behind the source, and a change outside the quoted passages can go
-unnoticed for longer.
+A monthly job re-reads every source, fails if a quote is gone, and fails for any
+source retrieved more than a year ago ([verification.md](verification.md)). A
+law can change on any day, so between runs the data can be up to a month behind
+the source. A change outside the quoted passages is not caught at all
+([verification.md](verification.md#what-verification-does-not-prove)).
 
-## What a scan can and cannot tell you
+## Scans
 
-The scan tools run axe-core, which checks a subset of WCAG automatically. Most
-accessibility defects need a person to find them.
+axe-core checks a subset of WCAG automatically. A scan with nothing failing is
+not evidence that a site conforms: most criteria still need a person. What a
+scan can and cannot tell you is in
+[results.md](results.md#what-a-scan-can-and-cannot-tell-you).
 
-- `failing` lists defects axe found. Each one is real, and the list is not
-  complete.
-- `needsReview` lists criteria axe could not decide. A person checks each one.
-- `notCheckedByAxe` lists clause 9 criteria no axe rule touched. These need a
-  person. On the repaired test-shop page, 41 of the 50 are in this list.
-- There is no "passed" list. An axe pass means its rules found nothing, not that
-  the criterion was evaluated
-  ([ADR 0004](adr/0004-an-axe-pass-is-not-an-evaluation.md)).
-
-A scan with nothing failing is not evidence that a site conforms.
-[docs/results.md](results.md) explains how to turn a scan into a work list.
-
-### What `scan_url` can reach
-
-`scan_url` loads any http or https URL it is given in headless Chromium. Other
-schemes (`file:`, `data:`, `javascript:`) are refused.
-
-A scan that starts at a private address (`localhost`, 0.0.0.0/8, loopback, the RFC 1918 ranges, carrier-grade NAT (100.64.0.0/10), link-local, `::`, IPv6 unique-local and link-local, IPv4 written inside IPv6, or a name that resolves to one) may go
-anywhere, so a local dev server can be scanned. A scan that starts at a public
-address follows redirects, up to 10 hops, but stops with an error if the page
-navigates to a private address.
-
-That rule covers the page's own navigations only. A public page's images,
-scripts, frames and requests made by its scripts load as in a normal browser,
-wherever they point.
-
-`scan_html` runs the markup in an offline browser context: HTTP requests,
-WebSockets, prefetch and service workers are all refused.
-
-If the server runs where it can reach internal services, an assistant can still
-ask it to scan them directly. See [SECURITY.md](../SECURITY.md).
+`scan_url` loads any http or https URL, including private addresses, under the
+redirect rule in [tools.md](tools.md#scan_url). If the server can reach internal
+services, an assistant can ask it to scan them. See [SECURITY.md](../SECURITY.md).
 
 ## Standards versions
 

@@ -14,24 +14,12 @@ Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Data changes
 
-Changes to `data/` follow their own process, written for people who do not write
-code: [docs/contributing-data.md](docs/contributing-data.md). Legal content is
-reviewed by the maintainer, and a disagreement about a reading of the law is
-settled by the primary text.
+Changes to `data/` follow their own process and review, written for people who
+do not write code: [docs/contributing-data.md](docs/contributing-data.md).
 
 ## Set up for development
 
-Node 22 or later.
-
-```bash
-git clone https://github.com/Rez-1/eaa-cite && cd eaa-cite
-npm install
-npx playwright install chromium
-npm run build
-```
-
-On Linux, use `npx playwright install --with-deps chromium` to install the system
-libraries Chromium needs. [docs/install.md](docs/install.md) has the details.
+Install from source with Chromium, as in [docs/install.md](docs/install.md).
 
 ## Run the tests
 
@@ -116,8 +104,7 @@ Keep it short.
 CI (`.github/workflows/ci.yml`) runs on every pull request: `npm ci`, Chromium
 install, `npm run typecheck`, `npm test`, `npm run build`, and `npm run demo` to
 check the server starts and answers over stdio. A pull request that touches
-`data/` also runs `npm run verify-sources` against the live sources
-(`.github/workflows/verify-sources.yml`).
+`data/` also runs `verify-sources` ([docs/verification.md](docs/verification.md#the-monthly-job)).
 
 In the description, say what changed and why, what you ran, and for data
 changes which sources you checked.

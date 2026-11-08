@@ -73,40 +73,8 @@ If national law names an EN 301 549 version, that version is in
 `claims.presumptionOfConformity.value.namesEn301549Version`. None of the four
 published jurisdictions names one.
 
-Trimmed example, from `{ "country": "se" }`:
-
-```json
-{
-  "jurisdiction": "SE",
-  "name": "Sweden",
-  "instrument": "Lag (2023:254) om vissa produkters och tjänsters tillgänglighet",
-  "claims": {
-    "applicationDate": {
-      "value": { "date": "2025-06-28" },
-      "citations": [
-        {
-          "source": {
-            "id": "sfs-2023-254",
-            "kind": "consolidated-text",
-            "url": "https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/",
-            "language": "sv",
-            "retrievedAt": "2026-11-08",
-            "verify": "quote"
-          },
-          "pinpoint": "Lag (2023:254), övergångsbestämmelser (2023:254) punkt 1",
-          "quote": "Denna lag träder i kraft den 28 juni 2025.",
-          "translation": "This act enters into force on 28 June 2025."
-        }
-      ]
-    }
-  },
-  "harmonisation": { "status": "not_cited", "basis": "eu", "checkedAt": "2026-11-08", "citations": [] },
-  "unverified": []
-}
-```
-
-The real answer has every claim, and the `harmonisation.citations` and
-`unverified` lists are filled in.
+A trimmed example, with notes on reading each part, is in
+[results.md](results.md#read-an-obligations-answer).
 
 ### Errors
 
@@ -123,7 +91,7 @@ One claim side by side for every published jurisdiction.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `claim` | string, one of the claim ids | yes | `applicationDate`, `transpositionDeadline`, `microenterpriseExemption`, `microenterpriseDefinition`, `presumptionOfConformity`, `nationalStandardReference`, `supervisoryAuthority`, `penalties`, `transitionalServiceContracts`, `transitionalSelfServiceTerminals` |
+| `claim` | string, one of the claim ids | yes | The ids are listed in [data-format.md](data-format.md#claim-list). |
 
 ### Output
 
@@ -170,36 +138,10 @@ The versions are free text. They are printed into the sentence as given.
 
 ### Output
 
-The conformance answer, from `conformanceFor` in
-[`src/dataset/conformance.ts`](../src/dataset/conformance.ts):
-
-| Field | Type | What it holds |
-|---|---|---|
-| `status` | `cited`, `not_cited` or `national_only` | The harmonisation status in that jurisdiction. |
-| `basis` | `eu` or `national-law` | Where the status comes from. `national-law` only when the member state's law names an EN 301 549 version. |
-| `enVersion` | string | The version the sentence names. |
-| `wcagVersion` | string | The WCAG baseline the sentence names. |
-| `sentence` | string | Fixed wording for the status, with the versions filled in. |
-| `mayClaimPresumptionOfConformity` | boolean | `true` only when `status` is `cited`. |
-| `checkedAt` | ISO date | The oldest `retrievedAt` among the cited sources. |
-| `citations` | array | Resolved citations, each with an added `jurisdiction` field (`EU` when the answer comes from the EU file). |
-
-Real output for `{ "country": "SE" }`, citations trimmed:
-
-```json
-{
-  "status": "not_cited",
-  "basis": "eu",
-  "enVersion": "EN 301 549 v3.2.1",
-  "wcagVersion": "WCAG 2.1 AA",
-  "mayClaimPresumptionOfConformity": false,
-  "sentence": "The site was assessed against EN 301 549 v3.2.1 (WCAG 2.1 AA) as a technical benchmark. No version of EN 301 549 is currently cited in the Official Journal of the European Union under Directive (EU) 2019/882, so no presumption of conformity is available through a harmonised standard, to this site or to any other.",
-  "checkedAt": "2026-11-08",
-  "citations": [ { "source": { "id": "commission-harmonised-standards" }, "jurisdiction": "EU" } ]
-}
-```
-
-How to read it: [results.md](results.md#read-a-conformance-answer).
+The conformance answer from `conformanceFor`
+([`src/dataset/conformance.ts`](../src/dataset/conformance.ts)). Each field is
+explained, with a real example, in
+[results.md](results.md#read-a-conformance-answer).
 
 ### Errors
 
@@ -267,24 +209,29 @@ clause 9 criterion.
 
 The server fetches any http or https URL it is given, including `localhost` and
 private network addresses. The assistant chooses the URL, so the server will load
-whatever it asks for. See [SECURITY.md](../SECURITY.md).
+whatever it asks for. Other schemes (`file:`, `data:`, `javascript:`) are
+refused, at the start and on every redirect. What this means for where you run
+the server is in [SECURITY.md](../SECURITY.md).
 
-Redirects are followed one hop at a time, up to 10. Where the scan starts decides
-where it may go:
+The redirect rule. Redirects are followed one hop at a time, up to 10. Where the
+scan starts decides where it may go:
 
-- A scan that starts at a private address may navigate anywhere. Private means
-  `localhost`, 0.0.0.0/8, loopback, the RFC 1918 ranges, carrier-grade NAT (100.64.0.0/10), link-local, `::`, IPv6 unique-local and link-local, IPv4 written inside IPv6.
+- A scan that starts at a private address may navigate anywhere, so a local dev
+  server can be scanned.
 - A scan that starts at a public address may not navigate to a private one. A
   redirect, or a navigation the page starts itself, to a private address stops
   the scan with an error.
 
-A hostname counts as private if it is `localhost`, ends in `.localhost`, or
-resolves to a private address. The rule covers top-level navigations only.
-Requests the page makes for images, scripts, styles, frames or `fetch` are not
-filtered. The check is in [`src/scan/privateHost.ts`](../src/scan/privateHost.ts).
+A host is private if it is `localhost`, ends in `.localhost`, or is or resolves
+to an address in a loopback, private-network, carrier-grade NAT, link-local or
+other local range, including IPv4 written inside IPv6. The full list is in
+[`src/scan/privateHost.ts`](../src/scan/privateHost.ts). The rule covers
+top-level navigations only. Requests the page makes for images, scripts, styles,
+frames or `fetch` are not filtered. Popups the page opens are refused.
 
+The main document is fetched by Node, not the browser, and refused above 20 MB.
 The page is loaded until its `load` event, with a 30 second timeout for each
-navigation. The server launches one Chromium on the first scan and reuses it,
+navigation, and the whole scan has a 60 second deadline. The server launches one Chromium on the first scan and reuses it,
 launching again after a failed launch or a crash. Each scan gets a fresh browser
 context.
 
@@ -309,8 +256,7 @@ Every scan error comes back as `isError: true` with text that starts
 | The page's document is over 20 MB | `Scan failed: Refused to load <url>: the document is larger than 20 MB.` |
 | Chromium not installed or cannot start | `Scan failed: ` followed by the first line of Playwright's launch error. Run `npx playwright install chromium`. |
 
-Every message is one line. A popup the page opens is refused and does not
-fail the scan.
+Every message is one line. A refused popup does not fail the scan.
 
 ## scan_html
 
@@ -322,11 +268,11 @@ The same scan for markup you already have, such as a component's rendered output
 |---|---|---|---|
 | `html` | string, 1 to 2,000,000 characters | yes | A full HTML document or a fragment. |
 
-The markup is set as the page content. Every network request it makes (images,
-stylesheets, scripts, fonts) is aborted, so the page cannot call out. Script in
-the markup still runs, because axe itself runs as page script. A page that
-depends on external CSS is scanned without it, which can change contrast
-results.
+The markup is set as the page content in an offline browser context: HTTP
+requests (images, stylesheets, scripts, fonts), WebSockets, prefetch and service
+workers are all refused, so the page cannot call out. Script in the markup still
+runs, because axe itself runs as page script. A page that depends on external
+CSS is scanned without it, which can change contrast results.
 
 ### Output
 
@@ -381,19 +327,8 @@ Each rule hit, in `rules` and in `outsideClause9`:
 | `firstTarget` | string | Selector of the first flagged element. |
 
 One rule can appear under more than one criterion when its axe tags name several.
-Both lists are sorted by WCAG number.
-
-Real output from `npm run demo`, reduced to one line per failing criterion:
-
-```
-> scan_html { html: <test/fixtures/shop-with-defects.html> }
-
-  9.1.1.1  Non-text Content           image-alt
-  9.1.4.3  Contrast (Minimum)         color-contrast
-  9.3.1.1  Language of Page           html-has-lang
-  9.4.1.2  Name, Role, Value          button-name, label
-  4 failing, 0 need review, 43 of 50 not checked by axe
-```
+Both lists are sorted by WCAG number. A full example report is in
+[results.md](results.md#read-a-scan-report).
 
 ## Resources
 

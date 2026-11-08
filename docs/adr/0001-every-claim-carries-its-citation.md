@@ -8,12 +8,12 @@ without a citation unrepresentable.
 
 `parseJurisdictionFile` (`src/dataset/load.ts`) adds the structural rules a schema
 cannot express, and a file that breaks them does not load: every citation names a
-listed source, every source is cited, source ids are unique, non-English quotes are
-translated, and the file declares the jurisdiction it is named for. Callers only
-ever see citations with their source filled in.
+listed source, every source is cited, non-English quotes are translated, and so on
+([the full list](../data-format.md#load-rules)). Callers only ever see citations
+with their source filled in.
 
 Sources must be on an official host (`src/dataset/officialHosts.ts`), also a load
-rule, because `verify-sources` fetches every source URL. Quote length (under 30
+rule, because `verify-sources` fetches every source URL. Quote length (at most 30
 words) is judgement and stays a test. Age is checked by `verify-sources`, which
 flags any source retrieved more than a year ago; a load check or a unit test on
 the date would stop a published copy working a year after release.

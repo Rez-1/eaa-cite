@@ -31,8 +31,8 @@ a small business is exempt, how long an old contract may run) are the ones most
 often paraphrased wrong or copied from the neighbouring country. Here every value
 is a claim with a citation: the source, the article, a verbatim quote in the
 source's language, and an English translation. A monthly job re-reads every
-official source and fails if a quote is no longer there. The longer version is in
-[docs/architecture.md](docs/architecture.md#why-citations).
+official source and fails if a quote is no longer there. The reasoning is in
+[ADR 0001](docs/adr/0001-every-claim-carries-its-citation.md).
 
 ## What is in it
 

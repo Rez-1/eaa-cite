@@ -1,9 +1,10 @@
 # Using eaa-cite as a library
 
-The package root, `eaa-cite`, exports the dataset lookups, the clause 9 table,
-the scanner and the MCP server factory. Everything listed here is exported from
-[`src/index.ts`](../src/index.ts). The second entry point, `eaa-cite/guarded`, is
-a separate sample described in [guarded.md](guarded.md).
+The package root, `eaa-cite`, exports the dataset lookups, the clause 9 table
+and the pure clause 9 mapping ([`src/index.ts`](../src/index.ts)). The scanner
+is its own entry, `eaa-cite/scan` ([`src/scan/index.ts`](../src/scan/index.ts)),
+because it loads Playwright. `eaa-cite/guarded` is a separate sample described in
+[guarded.md](guarded.md).
 
 All snippets on this page are TypeScript and were run against the built package.
 
@@ -24,7 +25,7 @@ your project too.
 | Package name | `eaa-cite` |
 | Module format | ESM only (`"type": "module"`). There is no CommonJS build. |
 | Node | 22 or later |
-| Entry points | `eaa-cite` and `eaa-cite/guarded` |
+| Entry points | `eaa-cite`, `eaa-cite/scan` and `eaa-cite/guarded` |
 | Types | `.d.ts` files next to the JavaScript in `dist/`. In TypeScript, use `"moduleResolution": "nodenext"` or `"bundler"` so the `exports` map is read. |
 
 Importing `eaa-cite` loads and checks all four jurisdiction files and the
@@ -133,22 +134,15 @@ DEFAULT_EN_VERSION; // "EN 301 549 v3.2.1"
 DEFAULT_WCAG_VERSION; // "WCAG 2.1 AA"
 ```
 
-`conformanceFor(code, assessed?)` takes an `Assessed` (`{ enVersion?, wcagVersion? }`) and returns a `ConformanceAnswer`:
-
-| Field | Type | Meaning |
-|---|---|---|
-| `status` | `HarmonisationStatus` | `cited`, `not_cited` or `national_only` |
-| `basis` | `"eu"` or `"national-law"` | `national-law` when the member state's law names an EN 301 549 version |
-| `enVersion` | string | The version the sentence names: the one in law if there is one, else `assessed.enVersion`, else `DEFAULT_EN_VERSION` |
-| `wcagVersion` | string | `assessed.wcagVersion`, else `DEFAULT_WCAG_VERSION` |
-| `sentence` | string | Fixed wording for the status |
-| `mayClaimPresumptionOfConformity` | boolean | `true` only for `cited` |
-| `checkedAt` | string | The oldest `retrievedAt` among the citations |
-| `citations` | `ResolvedCitation` with `jurisdiction` | The citations the answer rests on |
+`conformanceFor(code, assessed?)` takes an `Assessed` (`{ enVersion?, wcagVersion? }`)
+and returns a `ConformanceAnswer`, whose fields are explained in
+[results.md](results.md#read-a-conformance-answer). `enVersion` is the version in
+law if there is one, else `assessed.enVersion`, else `DEFAULT_EN_VERSION`.
+`wcagVersion` is `assessed.wcagVersion`, else `DEFAULT_WCAG_VERSION`.
 
 It throws `UnknownJurisdictionError` for an unpublished code, and
 `VersionMismatchError` when the law names a version and `enVersion` is a
-different one. How to read the answer: [results.md](results.md#read-a-conformance-answer).
+different one.
 
 The fixed sentences themselves are not exported. Reaching them only through
 `conformanceFor` means the version check and the EU or national choice always
@@ -182,8 +176,8 @@ criteriaFile.sources.en.sha256; // "1eee3a1841a94567da8e59f3b19a782ce9ab081c386b
 
 ## Scan a page
 
-The scanner is its own entry, `eaa-cite/scan`, because it loads Playwright. The
-package root does not, so importing the dataset never loads a browser library.
+Import the scanner from `eaa-cite/scan`. The package root does not load
+Playwright, so importing the dataset never loads a browser library.
 
 `createScanner` returns a scanner that owns one Chromium. It launches Chromium
 on the first scan, launches it again after a failed launch or a crash, and shuts
@@ -222,10 +216,11 @@ try {
 | `SCAN_CAVEAT` | The fixed caveat text carried on every report. |
 | `assertScannableUrl(raw)` | Parses a URL and returns a `URL`. Throws `UnsupportedUrlError` unless it is http or https. |
 | `mapToClauses(run)` | Maps an axe-core result (`AxeRun`) onto clause 9 and returns a `ClauseReport`. Pure, no browser. Use it if you run axe yourself. Also exported from the package root. |
+| `BlockedNavigationError`, `UnsupportedUrlError` | The scan errors in [Errors](#errors). |
 
 `scanUrl` and `scanHtml` behave as the `scan_url` and `scan_html` tools do,
 including the redirect rule and the blocked requests; see
-[tools.md](tools.md#scan_url). The report fields are listed in
+[tools.md](tools.md#scan_url) and [tools.md](tools.md#scan_html). The report fields are listed in
 [tools.md](tools.md#scan-results) and explained in
 [results.md](results.md#read-a-scan-report).
 
@@ -254,40 +249,12 @@ const run: AxeRun = {
 mapToClauses(run).failing[0].enClause; // "9.1.1.1"
 ```
 
-## Run the MCP server in your own process
+## The MCP server
 
-`createServer({ scanner, version? })` returns an `McpServer` from
-`@modelcontextprotocol/sdk` with the six tools and two resources registered. Pass
-it any `Scanner`: an object with `scanUrl(url)` and `scanHtml(html)` that return
-a `ScanReport`. `version` is the server version reported to clients; default
-`"0.1.0"`.
-
-To connect it, install the MCP SDK in your own project
-(`npm install @modelcontextprotocol/sdk`). A test that talks to the server with
-a fake scanner, the way [`test/mcp.test.ts`](../test/mcp.test.ts) does:
-
-```ts
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer, mapToClauses, SCAN_CAVEAT, type Scanner, type ScanReport } from "eaa-cite";
-
-const fixed: ScanReport = {
-  ...mapToClauses({ url: "https://shop.test/", violations: [], incomplete: [], passes: [] }),
-  caveat: SCAN_CAVEAT,
-};
-const scanner: Scanner = { scanUrl: async (url) => ({ ...fixed, url }), scanHtml: async () => fixed };
-
-const server = createServer({ scanner });
-const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
-const client = new Client({ name: "my-test", version: "0" });
-await Promise.all([server.connect(serverSide), client.connect(clientSide)]);
-
-const result = await client.callTool({ name: "scan_url", arguments: { url: "https://shop.test/" } });
-await client.close();
-```
-
-For a real server, pass `createScanner()` and call `scanner.close()` when you
-shut down. [`src/mcp/bin.ts`](../src/mcp/bin.ts) does exactly that over stdio.
+The server factory is not exported. To run the server, start
+`dist/mcp/bin.js` from a client ([mcp-setup.md](mcp-setup.md)).
+[`test/mcp.test.ts`](../test/mcp.test.ts) shows how the repo's own tests drive it
+in process, with a fake `Scanner`.
 
 ## Load a jurisdiction file of your own
 
@@ -317,8 +284,7 @@ another jurisdiction is rejected, and the error names the file
 
 The function throws one `DatasetIntegrityError` listing every problem found:
 schema errors first (as `path: message`), and only if the schema passes, the load
-rules. Every object in the schema is strict, so an unknown or misspelt key is a
-schema error, not silently dropped. The rules are listed in [data-format.md](data-format.md#load-rules).
+rules ([data-format.md](data-format.md#load-rules)).
 
 ## Errors
 
@@ -327,8 +293,8 @@ schema error, not silently dropped. The rules are listed in [data-format.md](dat
 | `UnknownJurisdictionError` | `getJurisdiction`, `citationsOf`, `conformanceFor` | `No data for "FR". Published: EU, SE, DE, ES` | |
 | `VersionMismatchError` | `conformanceFor` | `<code> law names <version>, but the assessment used <enVersion>. The conformance sentence cannot name a version the law does not.` | `jurisdiction`, `namedInLaw`, `assessed` |
 | `DatasetIntegrityError` | `parseJurisdictionFile`, and importing the package if a shipped file is broken | `<file> does not load:` followed by one `  - <problem>` line per problem | `file`, `problems` |
-| `UnsupportedUrlError` | `assertScannableUrl`, `scanner.scanUrl` | `Only http and https URLs can be scanned, got "<url>"` | |
-| `BlockedNavigationError` | `scanner.scanUrl` | `Refused to load <url>: it is a private network address, and the scan started at a public one. Start the scan at a private address (such as localhost) to scan private pages.` | `url` |
+| `UnsupportedUrlError` (from `eaa-cite/scan`) | `assertScannableUrl`, `scanner.scanUrl` | `Only http and https URLs can be scanned, got "<url>"` | |
+| `BlockedNavigationError` (from `eaa-cite/scan`) | `scanner.scanUrl` | `Refused to load <url>: it is a private network address, and the scan started at a public one. Start the scan at a private address (such as localhost) to scan private pages.` | `url` |
 
 Playwright errors from a scan (timeouts, refused connections, a missing
 Chromium) are passed through unchanged.
@@ -360,18 +326,19 @@ None of the published jurisdictions names an EN 301 549 version, so
 | `AxeRun` | The parts of an axe-core result `mapToClauses` reads | [`src/scan/map.ts`](../src/scan/map.ts) |
 | `ClauseReport` | The clause 9 report | `src/scan/map.ts` |
 | `ScanReport` | `ClauseReport` plus `caveat` | [`src/scan/scanner.ts`](../src/scan/scanner.ts) |
-| `Scanner` | `scanUrl` and `scanHtml`, as `createServer` needs | `src/scan/scanner.ts` |
+| `Scanner` | `scanUrl` and `scanHtml` | `src/scan/scanner.ts` |
 | `BrowserScanner` | `Scanner` plus `close()` | `src/scan/scanner.ts` |
 | `ScannerOptions` | Options for `createScanner` | `src/scan/scanner.ts` |
 
-Some types used inside these are not exported from the package root, for example
-`RuleHit`, `CriterionHits` and `Citation`. Reach them through the exported types,
-for example `ClauseReport["failing"][number]`.
+`ScanReport`, `Scanner`, `BrowserScanner` and `ScannerOptions` come from
+`eaa-cite/scan`, which also exports `RuleHit` and `CriterionHits`. Types not
+exported anywhere, such as `Citation`, are reached through the exported types,
+for example `JurisdictionFile["claims"]["penalties"]["citations"][number]`.
 
 ## Stability
 
-The public API is what `src/index.ts` exports, plus the shape of the JSON the
-tools return. The current version is 0.1.0. Changes to either are recorded in
+The public API is what `src/index.ts` and `src/scan/index.ts` export, plus the
+shape of the JSON the tools return. The current version is 0.1.0. Changes to either are recorded in
 [CHANGELOG.md](../CHANGELOG.md); read it before you update. A data change bumps
 the minor version, and the changelog records the date the data was retrieved.
 

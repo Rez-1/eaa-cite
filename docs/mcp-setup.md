@@ -3,17 +3,9 @@
 How to add the eaa-cite server to an MCP client. Install and build it first:
 [install.md](install.md).
 
-## What the server does
-
-`dist/mcp/bin.js` is an MCP server that talks over stdio. It offers six tools
-(`get_obligations`, `compare_jurisdictions`, `conformance_statement`,
-`explain_criterion`, `scan_url`, `scan_html`) and two resources
-(`eaa://jurisdictions/{code}` and `eaa://criteria/en-301-549-v3.2.1`). No model
-runs inside it: lookups read the checked-in dataset, and the scan tools run
-axe-core in headless Chromium. Chromium is started on the first scan and reused
-until the server stops. The full reference is [tools.md](tools.md).
-
-It has been used with Claude Desktop and Claude Code.
+`dist/mcp/bin.js` is an MCP server that talks over stdio. Its six tools and two
+resources are described in [tools.md](tools.md). It has been used with Claude
+Desktop and Claude Code.
 
 In every example below, replace `/absolute/path/to/eaa-cite` with the folder you
 cloned into. Run `pwd` inside it to get the path.
@@ -142,15 +134,11 @@ Scan errors come back as text starting `Scan failed:`.
 - The URL is not http or https. The message is
   `Only http and https URLs can be scanned, got "..."`. `file:` URLs are refused
   on purpose; serve the files over HTTP, or pass the markup to `scan_html`.
-
 - The scan started at a public address and was sent to a private one. The
   message starts `Refused to load`. Start the scan at the private address
-  directly if you mean to scan it.
+  directly if you mean to scan it ([tools.md](tools.md#scan_url)).
 
-`scan_url` fetches any http or https URL, including localhost and private network
-addresses. A scan that starts at a public address may not be redirected to a
-private one ([tools.md](tools.md#scan_url)). `scan_html` blocks every network
-request the markup makes, so external stylesheets and images are not loaded.
+Every scan error is listed under [`scan_url` in tools.md](tools.md#scan_url).
 
 ### Where to find logs
 

@@ -16,7 +16,9 @@ do when a check fails. The script is `scripts/verify-sources.ts`; the CI job is
   that is one source, Germany's federal gazette (`bgbl-2021-i-2970`), which serves
   its PDFs through a JavaScript viewer.
 
-The script never edits the data.
+The script never edits the data: a missing quote can mean the law changed, the
+page moved, or the quote was wrong, and only a person can tell which
+([ADR 0001](adr/0001-every-claim-carries-its-citation.md)).
 
 ## How the check works
 
@@ -138,6 +140,10 @@ and 0 otherwise. `manual` sources do not make it fail.
 | `manual` | `manual` | The source is marked `verify: "manual"`. It was not fetched; a person must check it. | no |
 | `skipped` | `skipped` | Its host was passed to `--skip-host`. It was not fetched. | no |
 
+Any source whose `retrievedAt` is more than 365 days old is also marked `STALE`
+(`"stale": true` in the JSON), whatever its status, and fails the run. Stale data
+therefore opens an issue even when every quote is still there.
+
 `ok` means the words are still on the page. It does not mean the value is still
 right; see [What verification does not prove](#what-verification-does-not-prove).
 
@@ -209,9 +215,6 @@ Something about the source changed. Find out what before touching the data.
 6. Open a pull request, and link the `verify-sources` issue from it. Close the
    issue when the fix is merged and the next run passes.
 
-Each of the three needs a person to read the source, which is why the script
-reports and stops instead of guessing.
-
 ### A fetch failed
 
 1. Run `npm run verify-sources` again. Public sites have short outages, and a
@@ -235,8 +238,7 @@ reports and stops instead of guessing.
 
 Manual sources appear in every run's output and in the JSON with status
 `manual`. They do not fail the run, so nothing reminds you except that list and
-the age rule: once a source's `retrievedAt` is more than 365 days old, the run
-marks it `STALE` and fails, and the monthly job opens an issue.
+the [age rule](#reading-the-result).
 
 To re-check one:
 
@@ -250,15 +252,6 @@ To re-check one:
 The script never updates `retrievedAt`, for `quote` sources either. After a
 passing run, someone still has to update the dates for the sources it confirmed,
 or the age rule fails within the year.
-
-## Why the script never edits the data
-
-A missing quote means the law changed, the page moved, or the quote was wrong.
-A script cannot tell which, and each needs a different fix. A tool that rewrote
-quotes to match the page would turn "the law changed" into a silent change of a
-legal value. So the script reports and exits, and a person updates the data in a
-reviewed pull request. See
-[ADR 0001](adr/0001-every-claim-carries-its-citation.md).
 
 ## What verification does not prove
 

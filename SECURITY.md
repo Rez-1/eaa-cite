@@ -22,39 +22,25 @@ Reports are acknowledged within 7 days.
 
 ## What the scanner does
 
-The two scan tools behave differently on the network:
+`scan_url` loads any http or https URL in headless Chromium, including
+`localhost` and private network addresses. A scan that starts at a public
+address may not navigate to a private one. `scan_html` runs markup in an offline
+browser context, and the test suite checks each refused request type against a
+local server. The full rules are in [docs/tools.md](docs/tools.md#scan_url); the
+code is `src/scan/scanner.ts` and `src/scan/privateHost.ts`.
 
-| Tool | What it can reach |
-|---|---|
-| `scan_url` | Loads any `http` or `https` URL it is given in headless Chromium, including `localhost` and private network addresses. A scan that starts at a public address follows up to 10 redirects and refuses to navigate to a private address. Popups are refused. The page loads its own images, scripts and frames as a normal browser would. |
-| `scan_html` | Loads the markup it is given in an offline browser context: HTTP requests, WebSockets, prefetch and service workers are all refused, and the test suite checks each of them against a local server. |
+Known gaps in those rules:
 
-The rules for `scan_url` are in `src/scan/scanner.ts`:
-
-- `assertScannableUrl` refuses every scheme except http and https, including
-  `file:`, `data:` and `javascript:`. It is applied to the start URL and to every
-  redirect target.
-- The scan's starting host decides the rest. If it is private (`localhost`, 0.0.0.0/8, loopback, the RFC 1918 ranges, carrier-grade NAT (100.64.0.0/10), link-local, `::`, IPv6 unique-local and link-local, IPv4 written inside IPv6, or a name
-  that resolves to one), the scan may go anywhere. Scanning a local dev server is the
-  main use.
-- If the starting host is public, each navigation of the page itself is checked,
-  and one to a private address stops the scan with `BlockedNavigationError`.
-- The check covers the page's own navigations only. Images, scripts, frames and
-  requests made by the page's scripts are not checked.
+- The redirect rule covers the page's own navigations only. Images, scripts,
+  frames and requests made by the page's scripts are not checked.
 - The check resolves the name separately from the fetch, so a name whose DNS
   answer changes between the two lookups (DNS rebinding) can get past it.
-
-Limits that apply to every scan:
-
-- The page's main document is fetched by Node, not the browser, and is refused
-  above 20 MB (counted after decompression).
-- A whole scan has a deadline of twice the navigation timeout (60 seconds by
-  default), so a page that keeps axe busy cannot hold a tool call open.
 - There is no limit on how many scans run at once. Each uses its own browser
   context in one shared Chromium.
-- A scan report contains text the page controls: selectors built from its ids
-  and classes (cut to 120 characters) and its final URL. An assistant should
-  treat the report as data, not instructions; the report's own caveat says so.
+
+A scan report contains text the page controls: selectors built from its ids and
+classes (cut to 120 characters) and its final URL. An assistant should treat the
+report as data, not instructions; the report's own caveat says so.
 
 The lookup tools and the two resources read only the checked-in data and make no
 network requests.

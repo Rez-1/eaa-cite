@@ -10,9 +10,8 @@ call it reads a ledger and refuses to call the model once a cap is reached. It
 validates the output against a Zod schema, retries bad output a bounded number of
 times, and writes a ledger row for every outcome, failures included.
 
-It is separate from the dataset and the MCP server. None of the server's tools
-call a model, and nothing in the package root imports this module. It is the
-agent wrapper from the private audit system this repo came from
+Nothing else in the package imports it, and the MCP server calls no model. It is
+the agent wrapper from the private audit system this repo came from
 ([case-study.md](case-study.md)), with the Postgres table replaced by the
 `SpendLedger` interface.
 
@@ -125,13 +124,11 @@ When the check fails no model call is made and no ledger row is written. The
 check happens once per `runStructured` call, not before each retry, so a call
 that starts under the cap can finish over it by the cost of its retries.
 
-The cap also assumes calls run one after another. The check reads spend, the
-call runs, and the spend is recorded afterwards, with nothing reserved in
-between, so calls started at the same moment all see the same spend and can all
-pass: ten parallel calls against a $1 cap can spend $10. To hold a cap under
-concurrency, run calls through a queue, or use a ledger that reserves an
-estimated cost before the call and settles it after. That reservation is not
-built (see [ADR 0006](adr/0006-spend-caps-are-code.md)).
+The cap also assumes calls run one after another. Calls started at the same
+moment all read the same spend and can all pass: ten parallel calls against a $1
+cap can spend $10. Run calls through a queue to hold the cap. A ledger that
+reserves cost before the call is not built
+([ADR 0006](adr/0006-spend-caps-are-code.md)).
 
 Money is integer micro-USD (one millionth of a dollar). `costMicros(rate, usage)`
 computes a run's cost:

@@ -1,20 +1,9 @@
 # Architecture
 
 A map of the code for reviewers. The reasons behind each decision are in the
-ADRs, linked at the end. Terms follow [CONTEXT.md](../CONTEXT.md).
-
-## Why citations
-
-Scanners report which WCAG criteria a page fails. The next question is what the
-law says about it, and that is usually answered from memory or a blog post. The
-values that matter most (the highest fine, whether a small business is exempt,
-how long an old contract may run) are the ones most often paraphrased wrong or
-copied from a neighbouring country.
-
-So every value is a claim, and a claim cannot exist without a citation: a source,
-a pinpoint, a verbatim quote and an English translation. A file that breaks this
-does not load, and a monthly job checks every quote against its live source.
-[ADR 0001](adr/0001-every-claim-carries-its-citation.md) has the full argument.
+ADRs, linked at the end; why every value carries a citation is
+[ADR 0001](adr/0001-every-claim-carries-its-citation.md). Terms follow
+[CONTEXT.md](../CONTEXT.md).
 
 ## Layout of the repo
 
@@ -106,8 +95,8 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
   the WCAG 2.1 A and AA tags plus WCAG 2.2 AA, and returns the scan report with
   its caveat. Each scan has a deadline and reports errors in one line. It also
   holds `assertScannableUrl`, which refuses anything but http and https, and
-  `openWithRedirectRule`, which follows redirects one hop at a time, refuses
-  popups, and refuses a private address after a public start.
+  `openWithRedirectRule`, which applies the redirect rule
+  ([tools.md](tools.md#scan_url)) and refuses popups.
 - `fetchDocument.ts`: fetches each main-frame document in Node, without
   following redirects and with a 20 MB cap, so the browser never receives an
   unbounded body.
@@ -162,9 +151,10 @@ Three interfaces where a different implementation can be plugged in:
 
 - Load rules are tested by breaking copies of the real jurisdiction files and
   checking the problems the loader reports (`test/dataset.test.ts`).
-- Editorial rules (quote length, source age, official domains) run against the
-  shipped data in the same file. They are tests, not load checks, so the package
-  keeps working after a source passes its age limit.
+- Editorial rules (quote length, the application date, no future retrieval
+  dates, the evidence a `cited` status needs) run against the shipped data in
+  the same file. Source age is checked by `verify-sources`, so the package keeps
+  working after a source passes its age limit.
 - MCP contract tests drive the server through a real MCP client
   (`test/mcp.test.ts`).
 - Chromium scans the fixtures in `test/fixtures/` and the test shop in

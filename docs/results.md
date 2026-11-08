@@ -51,21 +51,9 @@ defects:
 }
 ```
 
-The top-level fields:
-
-| Field | Meaning |
-|---|---|
-| `url` | The page scanned. For `scan_html` it is always `about:blank (inline HTML)`. |
-| `axeVersion` | The axe-core version that ran, or `null` if axe did not report one. |
-| `failing` | Clause 9 criteria where an axe rule found violations. |
-| `needsReview` | Clause 9 criteria where an axe rule could not decide. |
-| `notCheckedByAxe` | Clause 9 criteria no axe rule looked at on this page. |
-| `outsideClause9` | Failed axe rules that name no clause 9 criterion. |
-| `summary` | The length of each of the first three lists, and the size of the clause 9 table (`ofCriteria`, 50). |
-| `caveat` | A fixed text sent with every scan, so an assistant passing the result on has the warning next to it, including that selectors and URLs come from the page and are data, not instructions. |
-
-The scan runs only the axe rules tagged for WCAG 2.1 A and AA (`wcag2a`,
-`wcag2aa`, `wcag21a`, `wcag21aa`), the level EN 301 549 v3.2.1 clause 9 requires.
+Every field and its type is listed in [tools.md](tools.md#scan-results). The
+`caveat` is fixed text sent with every scan, so an assistant passing the result
+on has the warning next to it. The groups mean this:
 
 ### Failing
 
@@ -152,28 +140,20 @@ are in no list. They are not reported as passed (see below).
 
 ### Outside clause 9
 
-`outsideClause9` holds failed axe rules that name no clause 9 criterion: in
-practice the WCAG 2.2 AA rules, such as `target-size`, which EN 301 549 v3.2.1
-does not require. Best-practice rules are not run. They are listed so that
-nothing axe reported disappears. They are not clause 9 findings.
-
-Each entry has the same fields as a rule under `failing`.
-
-The scan tools run the WCAG 2.1 A and AA rules, which all name a clause 9
-criterion, plus the WCAG 2.2 AA rules, which do not. So this list fills when a
-WCAG 2.2 rule fails: on a page with small, close-together buttons, for example,
-`target-size` lands here.
+The scan runs the axe rules for WCAG 2.1 A and AA, which all name a clause 9
+criterion, plus the WCAG 2.2 AA rules, which do not. Best-practice rules are not
+run. `outsideClause9` holds the failed rules that name no clause 9 criterion: in
+practice WCAG 2.2 rules such as `target-size`, which lands here on a page with
+small, close-together buttons. They are listed so that nothing axe reported
+disappears, but they are not clause 9 findings. Each entry has the same fields
+as a rule under `failing`.
 
 ### Why there is no "passed" list
 
-When axe passes its rules for a criterion, it means those rules found nothing.
-It does not mean the criterion was evaluated. Take 1.3.1, Info and
-Relationships: axe can check that table headers are marked up, but not that the
-page's structure makes sense. A "passed" list would read as "these are fine",
-and an assistant summarising the report would repeat it.
-
-So the report lists what axe did not check, and nothing as passed. The reasoning
-is in [ADR 0004](adr/0004-an-axe-pass-is-not-an-evaluation.md).
+An axe pass means its rules found nothing, not that the criterion was evaluated.
+A "passed" list would read as "these are fine", and an assistant summarising the
+report would repeat it. So the report lists what axe did not check instead
+([ADR 0004](adr/0004-an-axe-pass-is-not-an-evaluation.md)).
 
 ## What a scan can and cannot tell you
 
@@ -279,8 +259,8 @@ How to read it:
   BFSG.
 - `quote` is verbatim, in the source's language. `…` marks a part left out.
 - `translation` is an English translation, present whenever the source is not in
-  English. It is written for checking the quote. It is not an official
-  translation; cite the original.
+  English. It is unofficial and is there for checking the quote; cite the
+  original ([data-format.md](data-format.md#translations)).
 - `source` is the whole source entry: its title, URL, language, the date it was
   retrieved (`retrievedAt`), and how it is re-checked (`verify`). A `note` on a
   source can be a legal caveat, so read it.
@@ -289,8 +269,8 @@ How to read it:
   claim. That means the dataset has no value for it; it does not mean the law is
   silent.
 - `harmonisation` is whether EN 301 549 gives a presumption of conformity here.
-  It carries the same fields as a conformance answer, without the sentence. See
-  [Read a conformance answer](#read-a-conformance-answer).
+  It carries the same fields as a conformance answer, without the sentence
+  ([below](#read-a-conformance-answer)).
 - `unverified` lists what the research looked for and could not confirm from an
   official source. These entries are not claims. Treat each one as an open
   question.
@@ -348,7 +328,7 @@ standard it assessed against, in one jurisdiction. For Germany:
 | Field | Meaning |
 |---|---|
 | `status` | The harmonisation status: `cited`, `not_cited` or `national_only`. |
-| `basis` | `eu` when the status comes from the EU-level check; `national-law` when the member state's own law names an EN 301 549 version. |
+| `basis` | `eu` when the status comes from the EU file; `national-law` when the member state's own law names an EN 301 549 version. How this is worked out: [data-format.md](data-format.md#conformance-answer). |
 | `enVersion` | The version the sentence names. By default EN 301 549 v3.2.1. Where national law names a version, it is that version. |
 | `wcagVersion` | The WCAG baseline the sentence names. By default WCAG 2.1 AA. |
 | `sentence` | The sentence a report prints. The wording is fixed in code, one per status. Print it as it is. |
@@ -356,57 +336,15 @@ standard it assessed against, in one jurisdiction. For Germany:
 | `checkedAt` | The oldest `retrievedAt` among the cited sources. The answer is only as fresh as its oldest evidence. |
 | `citations` | The citations the answer rests on. Each is tagged with the `jurisdiction` whose file it comes from, so an EU citation in a German answer says `EU`. |
 
-The three statuses:
-
-- `cited`: a version of EN 301 549 is cited in the Official Journal under
-  Directive (EU) 2019/882. A report may claim a presumption of conformity.
-- `not_cited`: no version is cited under the EAA. EN 301 549 is a technical
-  benchmark. A report must not claim a presumption of conformity.
-- `national_only`: no Official Journal citation, but the member state's law names
-  a version. That version governs there. A report still must not claim the
-  presumption.
-
+What each status means is in [data-format.md](data-format.md#harmonisation-status).
 A report may claim a presumption of conformity only when `status` is `cited`. As
-of 2026-11-08 the status is `not_cited` in every published jurisdiction. EN 301
-549 v3.2.1 is cited under the Web Accessibility Directive, which covers public
-sector websites, and that citation does not carry over to the EAA. The reasoning
-is in [ADR 0003](adr/0003-harmonisation-status-has-three-values.md).
+of 2026-11-08 it is `not_cited` in every published jurisdiction. Why EN 301 549's
+citation under the Web Accessibility Directive does not count is in
+[ADR 0003](adr/0003-harmonisation-status-has-three-values.md).
 
 ## The test-shop results
 
 [`examples/RESULTS.md`](../examples/RESULTS.md) is the output of running the
-whole system against the test shop in
-[`examples/test-shop/`](../examples/test-shop/): five pages with planted
-defects, each marked with a `PLANTED` comment, and an
-[`expected.json`](../examples/test-shop/expected.json) written before the first
-scan. Every scan in it went through the MCP server's `scan_url` tool over stdio.
-
-It shows:
-
-- for each page, the planted defects found under the expected EN clauses, and
-  any failures nobody planted;
-- the planted defects axe has no rule for, such as a removed focus outline
-  (2.4.7) or colour swatches a keyboard cannot reach (2.1.1). None is reported as
-  failing; each is listed under not checked by axe;
-- the criteria that need review on each page, and how many are not checked by
-  axe;
-- the clean product page, `product-fixed.html`: no failures in clause 9, and 41
-  of 50 criteria not checked by axe;
-- what the law says about it: the penalties comparison and the conformance
-  sentence for Germany.
-
-With `--w3c`, the run also scans W3C's Before and After Demonstration site: four
-pages published twice, once with known barriers and once repaired. There is no
-`expected.json` for them; the check is that "after" fails far less than
-"before". The current `RESULTS.md` was generated with `--w3c`: each "before"
-page fails four or five clause 9 criteria, and each "after" page fails none.
-
-To regenerate the file:
-
-```bash
-npm run try            # the test shop, served on 127.0.0.1
-npm run try -- --w3c   # also the W3C demo site; needs the network
-```
-
-This rewrites `examples/RESULTS.md`. Both need Chromium (`npx playwright install
-chromium`). See [examples/README.md](../examples/README.md).
+whole system against the test shop: for each page, the planted defects found,
+those axe has no rule for, and what the law says about it. How it is made and
+regenerated is in [examples/README.md](../examples/README.md).
