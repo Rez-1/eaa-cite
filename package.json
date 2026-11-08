@@ -8,7 +8,8 @@
     "node": ">=22"
   },
   "bin": {
-    "eaa-cite-mcp": "./dist/mcp/bin.js"
+    "eaa-cite-mcp": "./dist/mcp/bin.js",
+    "eaa-cite": "./dist/cli/main.js"
   },
   "exports": {
     ".": "./dist/index.js",
@@ -30,7 +31,8 @@
     "verify-sources": "tsx scripts/verify-sources.ts",
     "demo": "tsx scripts/demo.ts",
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
-    "try": "tsx scripts/try-test-shop.ts"
+    "try": "tsx scripts/try-test-shop.ts",
+    "cli": "tsx src/cli/main.ts"
   },
   "keywords": [
     "accessibility",

@@ -53,6 +53,8 @@ Data retrieved 2026-11-08.
 - `npm run verify-sources`: re-reads every source and checks each quote is still
   there. Never edits the data.
 - `npm run demo`: starts the server over stdio and calls three tools.
+- The `eaa-cite` command: `scan` (exits 1 on clause 9 failures), `obligations`,
+  `compare` and `check-data`, each with `--json`. See `docs/cli.md`.
 - A five-page test shop with planted defects (`examples/test-shop/`) and an
   `expected.json` written before the first scan. `npm run try` scans it through
   the server and writes `examples/RESULTS.md`; `--w3c` adds W3C's Before and

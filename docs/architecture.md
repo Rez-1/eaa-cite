@@ -112,6 +112,15 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
   not checked by axe. It is pure, so it is tested without a browser.
 - `index.ts`: the pure parts only, so importing them does not load Playwright.
 
+### cli
+
+`src/cli/`.
+
+- `run.ts`: the four commands (`scan`, `obligations`, `compare`, `check-data`).
+  Each calls one function the MCP tools also use and formats the answer as text
+  or JSON. Output and the scanner are injected, so the tests need no process.
+- `main.ts`: the `eaa-cite` entry point. Sets the exit code from `run`.
+
 ### mcp
 
 `src/mcp/`.

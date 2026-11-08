@@ -97,9 +97,13 @@ If you have Node 22 and a clone of the repository (see
 [install.md](install.md)):
 
 ```bash
+npm run cli -- check-data data/jurisdictions/es.json   # the load rules, on one file
 npm test                 # loads every file and checks the editorial rules
 npm run verify-sources   # fetches every source and checks every quote
 ```
+
+`check-data` is the quickest: it checks just the file you edited and lists every
+problem, without running the whole test suite. See [cli.md](cli.md#check-data).
 
 If a file breaks a load rule, the test run stops with a `DatasetIntegrityError`
 that names the file and lists every problem at once:

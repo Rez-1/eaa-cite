@@ -72,6 +72,15 @@ The last line adds the server to Claude Code. For Claude Desktop and other
 clients, see [docs/mcp-setup.md](docs/mcp-setup.md). Full install notes are in
 [docs/install.md](docs/install.md).
 
+From the terminal:
+
+```bash
+node dist/cli/main.js scan https://shop.example/   # failures by EN 301 549 clause
+node dist/cli/main.js obligations de penalties     # the value, its article and quote
+```
+
+The four commands are in [docs/cli.md](docs/cli.md).
+
 As a library:
 
 ```ts
@@ -88,6 +97,7 @@ Use it:
 - [docs/install.md](docs/install.md): requirements, install from source, update, uninstall
 - [docs/mcp-setup.md](docs/mcp-setup.md): Claude Desktop, Claude Code, troubleshooting
 - [docs/tools.md](docs/tools.md): every tool and resource, with inputs, outputs and errors
+- [docs/cli.md](docs/cli.md): the `eaa-cite` command: scan, obligations, compare, check-data
 - [docs/library.md](docs/library.md): the TypeScript API
 - [docs/guarded.md](docs/guarded.md): `eaa-cite/guarded`, the spend-capped LLM wrapper (a sample)
 
