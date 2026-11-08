@@ -23,7 +23,7 @@ function packagesReachedFrom(entry: string): Set<string> {
   return packages;
 }
 
-const HEAVY = /^(playwright|@axe-core\/playwright|axe-core|@modelcontextprotocol\/|@anthropic-ai\/)/;
+const HEAVY = /^(playwright|@axe-core\/playwright|axe-core|@modelcontextprotocol\/)/;
 
 describe("package entries", () => {
   it.each(["src/index.ts", "src/scan/index.ts", "src/criteria/index.ts"])("keeps the browser and the SDKs out of %s", (entry) => {

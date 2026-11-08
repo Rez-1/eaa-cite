@@ -14,8 +14,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./scan": "./dist/scan/index.js",
-    "./scan/browser": "./dist/scan/browser.js",
-    "./guarded": "./dist/guarded/index.js"
+    "./scan/browser": "./dist/scan/browser.js"
   },
   "files": [
     "dist",
@@ -54,19 +53,10 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^1.6.0",
     "@types/node": "^26.6.6",
     "pdfjs-dist": "^6.5.438",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
-  },
-  "peerDependencies": {
-    "@anthropic-ai/sdk": ">=1.6.0"
-  },
-  "peerDependenciesMeta": {
-    "@anthropic-ai/sdk": {
-      "optional": true
-    }
   }
 }
