@@ -1,0 +1,152 @@
+{
+  "jurisdiction": "SE",
+  "name": "Sweden",
+  "instrument": "Lag (2023:254) om vissa produkters och tjänsters tillgänglighet",
+  "sources": [
+    {
+      "id": "sfs-2023-254",
+      "title": "Lag (2023:254) om vissa produkters och tjänsters tillgänglighet",
+      "identifier": "SFS 2023:254",
+      "kind": "consolidated-text",
+      "url": "https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/",
+      "language": "sv",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Consolidated to SFS 2026:1026, which rewrites the definitions in 2 § from 2026-11-20; the microenterprise definition reads the same before and after."
+    },
+    {
+      "id": "sfs-2023-676",
+      "title": "Förordning (2023:676) om vissa produkters och tjänsters tillgänglighet",
+      "identifier": "SFS 2023:676",
+      "kind": "consolidated-text",
+      "url": "https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/forordning-2023676-om-vissa-produkters-och_sfs-2023-676/",
+      "language": "sv",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Consolidated to SFS 2026:290."
+    }
+  ],
+  "claims": {
+    "applicationDate": {
+      "value": {
+        "date": "2025-06-28"
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254), övergångsbestämmelser (2023:254) punkt 1",
+          "quote": "Denna lag träder i kraft den 28 juni 2025.",
+          "translation": "This act enters into force on 28 June 2025."
+        }
+      ],
+      "note": "The ordinance enters into force the same day; its commencement provision is in the original print (https://svenskforfattningssamling.se/sites/default/files/sfs/2023-11/SFS2023-676.pdf), not on the consolidated page."
+    },
+    "microenterpriseExemption": {
+      "value": {
+        "appliesTo": "services"
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254) 10 § första stycket",
+          "quote": "Tjänster som tillhandahålls av mikroföretag behöver inte uppfylla tillgänglighetskraven.",
+          "translation": "Services provided by microenterprises do not need to meet the accessibility requirements."
+        }
+      ]
+    },
+    "microenterpriseDefinition": {
+      "value": {
+        "employeesFewerThan": 10,
+        "maxAnnualTurnoverEur": 2000000,
+        "maxAnnualBalanceSheetTotalEur": 2000000,
+        "test": "fewer than 10 employees, and annual turnover or annual balance sheet total of at most EUR 2 million"
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254) 2 § (definition 'mikroföretag')",
+          "quote": "mikroföretag: företag med färre än tio anställda och som har en årsomsättning eller en årlig balansomslutning som inte överstiger 2 miljoner euro,",
+          "translation": "microenterprise: an enterprise with fewer than ten employees and with an annual turnover or annual balance sheet total not exceeding EUR 2 million,"
+        }
+      ]
+    },
+    "presumptionOfConformity": {
+      "value": {
+        "basis": "harmonised standards whose references are published in the Official Journal",
+        "namesEn301549Version": null
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254) 9 §",
+          "quote": "Produkter och tjänster som helt eller delvis överensstämmer med en harmoniserad standard, till vilken hänvisningar har offentliggjorts i Europeiska unionens officiella tidning",
+          "translation": "Products and services that fully or partly conform to a harmonised standard whose references have been published in the Official Journal of the European Union"
+        }
+      ],
+      "note": "Neither the act nor the ordinance names EN 301 549 or any version of a standard."
+    },
+    "supervisoryAuthority": {
+      "value": {
+        "summary": "Post- och telestyrelsen supervises e-commerce, banking and electronic communications services, and coordinates the other supervisory authorities.",
+        "bodies": [
+          {
+            "name": "Post- och telestyrelsen (PTS)",
+            "role": "Supervisory authority for e-commerce, banking and electronic communications services",
+            "website": "https://pts.se"
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-676",
+          "pinpoint": "Förordning (2023:676) 28 § första stycket",
+          "quote": "Post- och telestyrelsen utövar tillsyn över elektroniska kommunikationstjänster, banktjänster och e-handelstjänster som omfattas av 4 § första stycket 1, 5 och 7",
+          "translation": "The Swedish Post and Telecom Authority supervises electronic communications services, banking services and e-commerce services covered by section 4(1) points 1, 5 and 7"
+        }
+      ],
+      "note": "The government's power to designate is in Lag (2023:254) 30 §. E-commerce services are 4 § första stycket 7; banking services 4 § första stycket 5."
+    },
+    "penalties": {
+      "value": {
+        "summary": "Orders to comply (32–34 §§), which may carry a conditional fine (35 §, no amount stated), and an administrative penalty fee (37–40 §§).",
+        "currency": "SEK",
+        "maxFine": 10000000,
+        "tiers": [
+          {
+            "label": "sanktionsavgift",
+            "min": 10000,
+            "max": 10000000
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254) 39 § första stycket",
+          "quote": "Sanktionsavgiften ska bestämmas till lägst 10 000 kronor och högst 10 000 000 kronor.",
+          "translation": "The administrative penalty fee shall be set at no less than SEK 10,000 and no more than SEK 10,000,000."
+        }
+      ]
+    },
+    "transitionalServiceContracts": {
+      "value": {
+        "rule": "Services under contracts concluded before entry into force may continue until the contract ends, at the latest 27 June 2030.",
+        "until": "2030-06-27"
+      },
+      "citations": [
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254), övergångsbestämmelser (2023:254) punkt 4",
+          "quote": "får fortsätta att tillhandahålla tjänsterna till dess att avtalstiden löper ut, dock längst till och med den 27 juni 2030",
+          "translation": "may continue to provide the services until the contract term expires, but at the latest up to and including 27 June 2030"
+        }
+      ]
+    }
+  },
+  "unverified": [
+    "No specific version of EN 301 549 or any named harmonised standard appears in Lag (2023:254) or Förordning (2023:676).",
+    "No vite amount is stated in the act (35 § only permits förelägganden to be combined with vite).",
+    "The consolidated riksdagen.se text of Förordning (2023:676) does not display its ikraftträdandebestämmelse; it was taken from the original SFS print instead.",
+    "Self-service terminal transition (övergångsbestämmelser punkt 5) was noted by the researcher but not quoted, so it is not recorded as a claim."
+  ]
+}

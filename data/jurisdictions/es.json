@@ -1,0 +1,246 @@
+{
+  "jurisdiction": "ES",
+  "name": "Spain",
+  "instrument": "Ley 11/2023, de 8 de mayo, título I",
+  "sources": [
+    {
+      "id": "ley-11-2023",
+      "title": "Ley 11/2023, de 8 de mayo, de trasposición de Directivas de la Unión Europea en materia de accesibilidad de determinados productos y servicios, migración de personas altamente cualificadas, tributaria y digitalización de actuaciones notariales y registrales; y por la que se modifica la Ley 12/2011, de 27 de mayo, sobre responsabilidad civil por daños nucleares o producidos por materiales radiactivos.",
+      "identifier": "BOE-A-2023-11022",
+      "kind": "consolidated-text",
+      "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2023-11022",
+      "language": "es",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "ELI https://www.boe.es/eli/es/l/2023/05/08/11/con. No amendments since publication on 09/05/2023."
+    },
+    {
+      "id": "rd-143-2026",
+      "title": "Real Decreto 143/2026, de 25 de febrero, por el que se crea y regula la Unidad técnica de apoyo y coordinación de las autoridades de vigilancia en materia de requisitos de accesibilidad.",
+      "identifier": "BOE-A-2026-4520",
+      "kind": "consolidated-text",
+      "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2026-4520",
+      "language": "es",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
+    },
+    {
+      "id": "rdl-1-2013",
+      "title": "Real Decreto Legislativo 1/2013, de 29 de noviembre, por el que se aprueba el Texto Refundido de la Ley General de derechos de las personas con discapacidad y de su inclusión social.",
+      "identifier": "BOE-A-2013-12632",
+      "kind": "consolidated-text",
+      "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2013-12632",
+      "language": "es",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Not an EAA act. Its título III is the fallback penalty regime named by Ley 11/2023 art. 30.1."
+    }
+  ],
+  "claims": {
+    "applicationDate": {
+      "value": {
+        "date": "2025-06-28"
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, disposición final decimoctava, apartado 2",
+          "quote": "El título I entrará en vigor el 28 de junio de 2025, a excepción del artículo 27.4",
+          "translation": "Title I enters into force on 28 June 2025, except Article 27.4."
+        }
+      ],
+      "note": "E-commerce services are in scope under art. 2.2.f)."
+    },
+    "microenterpriseExemption": {
+      "value": {
+        "appliesTo": "services"
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, artículo 3, apartado 3",
+          "quote": "Las microempresas que presten servicios estarán exentas de cumplir los requisitos de accesibilidad a que se refiere el párrafo tercero del apartado 1",
+          "translation": "Microenterprises providing services are exempt from the accessibility requirements referred to in the third paragraph of paragraph 1."
+        }
+      ]
+    },
+    "microenterpriseDefinition": {
+      "value": {
+        "employeesFewerThan": 10,
+        "maxAnnualTurnoverEur": 2000000,
+        "maxAnnualBalanceSheetTotalEur": 2000000,
+        "test": "fewer than 10 persons employed, and annual turnover or annual balance sheet total of at most EUR 2 million"
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, anexo VII, punto 16)",
+          "quote": "una empresa que emplea a menos de 10 personas y cuyo volumen de negocios anual no supera los 2 millones de euros",
+          "translation": "an enterprise employing fewer than 10 persons and whose annual turnover does not exceed EUR 2 million",
+          "note": "The definition continues: 'o cuyo balance anual total no supera los 2 millones de euros'."
+        }
+      ]
+    },
+    "presumptionOfConformity": {
+      "value": {
+        "basis": "harmonised standards whose references are published in the Official Journal",
+        "namesEn301549Version": null
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, artículo 17, apartado 1",
+          "quote": "Se presumirá que los productos y servicios conformes con normas armonizadas […] cumplen los requisitos de accesibilidad establecidos en el artículo 3",
+          "translation": "Products and services conforming to harmonised standards […] shall be presumed to meet the accessibility requirements of Article 3."
+        }
+      ],
+      "note": "A search of the consolidated text for '301 549' finds nothing."
+    },
+    "nationalStandardReference": {
+      "value": {
+        "standard": "UNE 139803",
+        "edition": null,
+        "appliesTo": "Websites in the scope of título I, including e-commerce sites"
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, disposición adicional tercera",
+          "quote": "Para ello servirá de referencia la norma UNE 139803 o aquella que la sustituya",
+          "translation": "For this purpose the reference shall be standard UNE 139803 or whichever replaces it."
+        }
+      ],
+      "note": "Names UNE 139803 'or whichever replaces it', with no edition. It does not name EN 301 549, so it does not make Spain national_only for any EN version."
+    },
+    "supervisoryAuthority": {
+      "value": {
+        "summary": "Each autonomous community, and Ceuta and Melilla, designates its own surveillance authorities. A State unit coordinates them and acts as the authority where none has been designated.",
+        "bodies": [
+          {
+            "name": "Autoridades de vigilancia of each autonomous community",
+            "role": "Market surveillance and checks on services"
+          },
+          {
+            "name": "Dirección General de Derechos de las Personas con Discapacidad",
+            "role": "State technical support and coordination unit; fallback surveillance authority"
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, artículo 27, apartado 3",
+          "quote": "Corresponde a las comunidades autónomas y a las ciudades de Ceuta y Melilla, en el ámbito de sus competencias, determinar sus autoridades de vigilancia",
+          "translation": "It is for the autonomous communities and the cities of Ceuta and Melilla, within their competences, to determine their surveillance authorities."
+        },
+        {
+          "source": "rd-143-2026",
+          "pinpoint": "Real Decreto 143/2026, artículo 2",
+          "quote": "se asume por la Dirección General de Derechos de las Personas con Discapacidad, órgano directivo del departamento competente en materia de discapacidad",
+          "translation": "is assumed by the Directorate-General for the Rights of Persons with Disabilities, a directorate of the department responsible for disability."
+        },
+        {
+          "source": "rd-143-2026",
+          "pinpoint": "Real Decreto 143/2026, artículo 3, letra h); mirrors Ley 11/2023, artículo 28, apartado 2, letra g)",
+          "quote": "Ejercer como autoridad de vigilancia en aquellos ámbitos en los que no se haya designado la autoridad de vigilancia.",
+          "translation": "To act as surveillance authority in those areas where no surveillance authority has been designated."
+        }
+      ]
+    },
+    "penalties": {
+      "value": {
+        "summary": "Sectoral legislation applies first; failing that, título III of RDL 1/2013. Breaching accessibility requirements is a serious infringement, or very serious in the cases of art. 95.4.f) and g). The State bands below apply where a region has no regime of its own.",
+        "currency": "EUR",
+        "maxFine": 1000000,
+        "tiers": [
+          {
+            "label": "leves (minor)",
+            "min": 301,
+            "max": 30000
+          },
+          {
+            "label": "graves (serious)",
+            "min": 30001,
+            "max": 90000
+          },
+          {
+            "label": "muy graves (very serious)",
+            "min": 90001,
+            "max": 1000000
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, artículo 30, apartado 1, párrafo primero",
+          "quote": "Los incumplimientos de lo dispuesto en el presente título serán sancionados conforme al régimen de infracciones y sanciones establecido en la legislación sectorial correspondiente.",
+          "translation": "Breaches of this title shall be penalised under the infringements and sanctions regime laid down in the corresponding sectoral legislation."
+        },
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, artículo 30, apartado 1, párrafo segundo",
+          "quote": "En lo no previsto en la legislación sectorial, se aplicará de manera supletoria el título III del Texto Refundido",
+          "translation": "Where sectoral legislation makes no provision, Title III of the Consolidated Text shall apply supplementarily."
+        },
+        {
+          "source": "rdl-1-2013",
+          "pinpoint": "Real Decreto Legislativo 1/2013, artículo 83, apartados 1 a 3",
+          "quote": "Las infracciones serán sancionadas con multas que irán desde un mínimo de 301 euros hasta un máximo de 1.000.000 de euros.",
+          "translation": "Infringements shall be penalised with fines from a minimum of EUR 301 to a maximum of EUR 1,000,000."
+        },
+        {
+          "source": "rdl-1-2013",
+          "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra a)",
+          "quote": "Las infracciones leves, en su grado mínimo, con multas de 301 a 6.000 euros; en su grado medio, de 6.001 a 18.000 euros",
+          "translation": "Minor infringements: in the minimum degree, fines of EUR 301 to 6,000; in the medium degree, EUR 6,001 to 18,000."
+        },
+        {
+          "source": "rdl-1-2013",
+          "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra b)",
+          "quote": "Las infracciones graves con multas, en su grado mínimo, de 30.001 a 60.000 euros; en su grado medio, de 60.001 a 78.000 euros",
+          "translation": "Serious infringements: in the minimum degree, fines of EUR 30,001 to 60,000; in the medium degree, EUR 60,001 to 78,000."
+        },
+        {
+          "source": "rdl-1-2013",
+          "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra c)",
+          "quote": "Las infracciones muy graves con multas, en su grado mínimo, de 90.001 a 300.000 euros; en su grado medio, de 300.001 a 600.000 euros",
+          "translation": "Very serious infringements: in the minimum degree, fines of EUR 90,001 to 300,000; in the medium degree, EUR 300,001 to 600,000."
+        }
+      ]
+    },
+    "transitionalServiceContracts": {
+      "value": {
+        "rule": "Service contracts concluded before 28 June 2025 may continue unchanged until they expire, for no longer than five years from that date.",
+        "until": null
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, disposición transitoria única, apartado 1, párrafo segundo",
+          "quote": "Los contratos de servicios celebrados antes del 28 de junio de 2025 podrán continuar sin cambios […] sin superar una duración de cinco años",
+          "translation": "Service contracts concluded before 28 June 2025 may continue unchanged […] for no longer than five years."
+        }
+      ]
+    },
+    "transitionalSelfServiceTerminals": {
+      "value": {
+        "rule": "Terminals lawfully used before 28 June 2025 may stay in use to the end of their economic life.",
+        "maxYearsAfterFirstUse": 10
+      },
+      "citations": [
+        {
+          "source": "ley-11-2023",
+          "pinpoint": "Ley 11/2023, disposición transitoria única, apartado 2",
+          "quote": "terminales de autoservicio utilizados legalmente […] antes del 28 de junio de 2025 podrán seguir utilizándose […] sin superar los diez años",
+          "translation": "Self-service terminals lawfully used […] before 28 June 2025 may continue to be used […] for no more than ten years."
+        }
+      ]
+    }
+  },
+  "unverified": [
+    "Which body each autonomous community (and Ceuta/Melilla) has designated as surveillance authority for services, including e-commerce: Ley 11/2023 art. 27.3 leaves designation to the regions, and RD 143/2026 does not list them. No regional designation acts or ministry list were retrieved.",
+    "Which 'legislación sectorial' supplies the penalty regime for e-commerce services under Ley 11/2023 art. 30.1: the act does not say, and no source was found that settles it. Only the supplementary regime (RDL 1/2013 título III) is quoted.",
+    "Regional (autonomous community) penalty amounts that may displace the State regime under RDL 1/2013 art. 78: not checked."
+  ]
+}

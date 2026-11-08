@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture shop: product page with known defects</title>
+    <style>
+      .faint { color: #aaaaaa; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <!-- No lang attribute on <html>: WCAG 3.1.1, axe rule html-has-lang. -->
+    <h1>Linen shirt</h1>
+    <!-- No alt text: WCAG 1.1.1, axe rule image-alt. -->
+    <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="200" height="200" />
+    <!-- Grey on white at about 2.3:1: WCAG 1.4.3, axe rule color-contrast. -->
+    <p class="faint">Free returns within 30 days.</p>
+    <form>
+      <!-- No label: WCAG 4.1.2, axe rule label. -->
+      <input type="text" name="quantity" />
+      <!-- Button with no text: WCAG 4.1.2, axe rule button-name. -->
+      <button type="submit"></button>
+    </form>
+  </body>
+</html>

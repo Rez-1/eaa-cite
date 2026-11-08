@@ -1,0 +1,66 @@
+{
+  "name": "eaa-cite",
+  "version": "0.1.0",
+  "description": "European Accessibility Act obligations per member state, every claim tied to its article, plus an MCP server that maps axe-core results to EN 301 549.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "eaa-cite-mcp": "./dist/mcp/bin.js"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./guarded": "./dist/guarded/index.js"
+  },
+  "files": [
+    "dist",
+    "data",
+    "LICENSE",
+    "DATA-LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "mcp": "tsx src/mcp/bin.ts",
+    "build:criteria": "tsx scripts/build-criteria.ts",
+    "verify-sources": "tsx scripts/verify-sources.ts",
+    "demo": "tsx scripts/demo.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "keywords": [
+    "accessibility",
+    "eaa",
+    "en-301-549",
+    "wcag",
+    "axe-core",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "dependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "axe-core": "^4.14.0",
+    "playwright": "^1.65.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@types/node": "^26.6.6",
+    "pdfjs-dist": "^6.5.438",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=1.6.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
+  }
+}

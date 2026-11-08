@@ -1,0 +1,18 @@
+The files in data/ are licensed under the Creative Commons Attribution 4.0
+International licence (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
+
+Attribute as: "eaa-cite dataset, https://github.com/Rez-1/eaa-cite".
+
+The licence covers the selection, structure, normalised values, pinpoints and
+translations. Quoted passages of legislation remain the work of their
+publishers and are included as short quotations to identify the provision each
+value comes from:
+
+- EU legislation (EUR-Lex): reused under Commission Decision 2011/833/EU.
+- Swedish statutes: not subject to copyright (upphovsrättslagen 9 §).
+- German statutes: not subject to copyright (UrhG § 5).
+- Spanish statutes: not subject to copyright (Ley de Propiedad Intelectual, art. 13).
+
+WCAG criterion names come from the W3C Recommendation and are used under the
+W3C Document License. data/en-301-549-v3.2.1-clause9.json holds no ETSI text,
+only clause numbers and page references (docs/adr/0005).

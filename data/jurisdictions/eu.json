@@ -1,0 +1,174 @@
+{
+  "jurisdiction": "EU",
+  "name": "European Union",
+  "instrument": "Directive (EU) 2019/882 (European Accessibility Act)",
+  "sources": [
+    {
+      "id": "dir-2019-882",
+      "title": "Directive (EU) 2019/882 of the European Parliament and of the Council of 17 April 2019 on the accessibility requirements for products and services",
+      "identifier": "CELEX 32019L0882; OJ L 151, 7.6.2019, p. 70–115",
+      "kind": "legislation",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019L0882",
+      "language": "en",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "ELI http://data.europa.eu/eli/dir/2019/882/oj. EUR-Lex lists the act as in force, with corrigenda for the DE, ET, FI, FR and HR versions only. Proposal 52026PC0590 would amend it; not adopted, not reviewed."
+    },
+    {
+      "id": "commission-harmonised-standards",
+      "title": "European Commission: harmonised standards, list of references published in the OJEU",
+      "kind": "commission-page",
+      "url": "https://single-market-economy.ec.europa.eu/single-market/european-standards/harmonised-standards_en",
+      "language": "en",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Page metadata dateModified 2026-10-14."
+    },
+    {
+      "id": "commission-wad-standards",
+      "title": "European Commission: harmonised standards for websites and mobile applications of public sector bodies (Directive (EU) 2016/2102)",
+      "kind": "commission-page",
+      "url": "https://single-market-economy.ec.europa.eu/single-market/goods/european-standards/harmonised-standards/accessibility-websites-and-mobile-applications_en",
+      "language": "en",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Cited to show where EN 301 549 IS cited: under the Web Accessibility Directive, not the EAA."
+    }
+  ],
+  "claims": {
+    "applicationDate": {
+      "value": {
+        "date": "2025-06-28"
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 31(2)",
+          "quote": "They shall apply those measures from 28 June 2025."
+        }
+      ],
+      "note": "Article 31(3) lets member states apply Article 4(8), answering emergency calls to 112, from 28 June 2027 at the latest."
+    },
+    "transpositionDeadline": {
+      "value": {
+        "date": "2022-06-28"
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 31(1)",
+          "quote": "Member States shall adopt and publish, by 28 June 2022, the laws, regulations and administrative provisions necessary to comply"
+        }
+      ]
+    },
+    "microenterpriseExemption": {
+      "value": {
+        "appliesTo": "services"
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 4(5)",
+          "quote": "Microenterprises providing services shall be exempt from complying with the accessibility requirements referred to in paragraph 3 of this Article"
+        }
+      ],
+      "note": "Services only. Microenterprises dealing in products get lighter obligations elsewhere, not this exemption."
+    },
+    "microenterpriseDefinition": {
+      "value": {
+        "employeesFewerThan": 10,
+        "maxAnnualTurnoverEur": 2000000,
+        "maxAnnualBalanceSheetTotalEur": 2000000,
+        "test": "fewer than 10 persons employed, and annual turnover or annual balance sheet total of at most EUR 2 million"
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 3, point (23)",
+          "quote": "‘microenterprise’ means an enterprise which employs fewer than 10 persons … annual balance sheet total not exceeding EUR 2 million",
+          "note": "Omitted at the ellipsis: 'and which has an annual turnover not exceeding EUR 2 million or an'."
+        }
+      ]
+    },
+    "presumptionOfConformity": {
+      "value": {
+        "basis": "harmonised standards whose references are published in the Official Journal",
+        "namesEn301549Version": null
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 15(1)",
+          "quote": "published in the Official Journal of the European Union, shall be presumed to be in conformity with the accessibility requirements"
+        }
+      ]
+    },
+    "penalties": {
+      "value": {
+        "summary": "Member states set the penalties. They must be effective, proportionate and dissuasive and come with remedial action. The directive sets no amounts.",
+        "currency": null,
+        "maxFine": null
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 30(2)",
+          "quote": "The penalties provided for shall be effective, proportionate and dissuasive."
+        }
+      ]
+    },
+    "transitionalServiceContracts": {
+      "value": {
+        "rule": "Service contracts agreed before 28 June 2025 may continue unaltered until they expire, but no longer than five years from that date.",
+        "until": null
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 32(1), second subparagraph",
+          "quote": "Service contracts agreed before 28 June 2025 may continue … but no longer than five years from that date.",
+          "note": "Omitted at the ellipsis: 'without alteration until they expire,'."
+        }
+      ],
+      "note": "The text states a five-year period, not a calendar date. Sweden and Germany write the end date as 27 June 2030."
+    },
+    "transitionalSelfServiceTerminals": {
+      "value": {
+        "rule": "Member state option: terminals lawfully used before 28 June 2025 may stay in use to the end of their economically useful life.",
+        "maxYearsAfterFirstUse": 20
+      },
+      "citations": [
+        {
+          "source": "dir-2019-882",
+          "pinpoint": "Article 32(2)",
+          "quote": "until the end of their economically useful life, but no longer than 20 years after their entry into use"
+        }
+      ]
+    }
+  },
+  "harmonisation": {
+    "status": "not_cited",
+    "checkedAt": "2026-11-08",
+    "citations": [
+      {
+        "source": "commission-harmonised-standards",
+        "pinpoint": "References of harmonised standards and of other European standards published in the OJEU, group 'Accessibility'",
+        "quote": "Websites and mobile applications of public sector bodies",
+        "note": "The only entry under Accessibility. There is no entry for Directive (EU) 2019/882 or for products and services."
+      },
+      {
+        "source": "commission-wad-standards",
+        "pinpoint": "Publications",
+        "quote": "drafted in support of Directive (EU) 2016/2102",
+        "note": "Implementing Decision (EU) 2018/2048, as amended on 11 August 2021. A citation under the Web Accessibility Directive; it does not carry over to the EAA."
+      }
+    ],
+    "note": "An exact-phrase EUR-Lex search for \"in support of Directive (EU) 2019/882\" returned no results on 2026-11-08. A search result page is not a stable source, so it is recorded here rather than cited."
+  },
+  "unverified": [
+    "A Commission Implementing Decision publishing references of harmonised standards in support of Directive (EU) 2019/882: none found on EUR-Lex or on the Commission harmonised-standards pages (2026-11-08).",
+    "A fixed calendar end date for the self-service-terminal transition (Article 32(2)): the text sets no such date, only 'no longer than 20 years after their entry into use'.",
+    "An explicit end date for service contracts in Article 32(1), second subparagraph: the text says 'five years from that date' (28 June 2025). 2030-06-28 is worked out from that.",
+    "The content of pending amendment proposal 52026PC0590 was not reviewed for effects on these claims."
+  ]
+}

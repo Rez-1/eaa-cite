@@ -1,0 +1,220 @@
+{
+  "jurisdiction": "DE",
+  "name": "Germany",
+  "instrument": "Barrierefreiheitsstärkungsgesetz (BFSG)",
+  "sources": [
+    {
+      "id": "bfsg-2",
+      "title": "BFSG § 2 Begriffsbestimmungen",
+      "identifier": "BGBl. I S. 2970",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsg/__2.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "Consolidated text last amended by Art. 32 G v. 6.5.2024. The page is ISO-8859-1 encoded."
+    },
+    {
+      "id": "bfsg-3",
+      "title": "BFSG § 3 Barrierefreiheitsanforderungen",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsg/__3.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
+    },
+    {
+      "id": "bfsg-4",
+      "title": "BFSG § 4 Vermutungswirkung",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsg/__4.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
+    },
+    {
+      "id": "bfsg-37",
+      "title": "BFSG § 37 Bußgeldvorschriften",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsg/__37.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
+    },
+    {
+      "id": "bfsg-38",
+      "title": "BFSG § 38 Übergangsbestimmungen",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsg/__38.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
+    },
+    {
+      "id": "bgbl-2021-i-2970",
+      "title": "Gesetz zur Umsetzung der Richtlinie (EU) 2019/882 (BGBl. 2021 I Nr. 46, S. 2970)",
+      "identifier": "BGBl. I S. 2970",
+      "kind": "official-gazette",
+      "url": "https://www.bgbl.de/xaver/bgbl/start.xav?startbk=Bundesanzeiger_BGBl&jumpTo=bgbl121s2970.pdf",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "manual",
+      "note": "bgbl.de serves the PDF through a JavaScript viewer with session-bound links, so a script cannot fetch it."
+    },
+    {
+      "id": "mlbf-about",
+      "title": "MLBF: Die Marktüberwachungsstelle stellt sich vor",
+      "kind": "authority-page",
+      "url": "https://www.mlbf-barrierefrei.de/%C3%9Cber-Uns/",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote",
+      "note": "The authority describing itself. Not a designating provision."
+    }
+  ],
+  "claims": {
+    "applicationDate": {
+      "value": {
+        "date": "2025-06-28"
+      },
+      "citations": [
+        {
+          "source": "bgbl-2021-i-2970",
+          "pinpoint": "Gesetz vom 16. Juli 2021 (BGBl. I S. 2970), Artikel 3 Satz 1",
+          "quote": "Dieses Gesetz tritt vorbehaltlich der Sätze 2 bis 4 am 28. Juni 2025 in Kraft.",
+          "translation": "Subject to sentences 2 to 4, this Act enters into force on 28 June 2025."
+        }
+      ],
+      "note": "A few provisions (BFSG § 3 Abs. 2 and Abs. 3 Satz 2 and 3, § 13 Abs. 3, § 17 Abs. 6) took effect the day after promulgation. The BFSGV also applies from 28 June 2025 (BFSGV § 22)."
+    },
+    "microenterpriseExemption": {
+      "value": {
+        "appliesTo": "services"
+      },
+      "citations": [
+        {
+          "source": "bfsg-3",
+          "pinpoint": "BFSG § 3 Absatz 3 Satz 1",
+          "quote": "Absatz 1 gilt nicht für Kleinstunternehmen, die Dienstleistungen anbieten oder erbringen.",
+          "translation": "Paragraph 1 does not apply to microenterprises that offer or provide services."
+        }
+      ]
+    },
+    "microenterpriseDefinition": {
+      "value": {
+        "employeesFewerThan": 10,
+        "maxAnnualTurnoverEur": 2000000,
+        "maxAnnualBalanceSheetTotalEur": 2000000,
+        "test": "fewer than 10 persons employed, and either annual turnover or annual balance sheet total of at most EUR 2 million"
+      },
+      "citations": [
+        {
+          "source": "bfsg-2",
+          "pinpoint": "BFSG § 2 Nummer 17",
+          "quote": "weniger als zehn Personen beschäftigt und … entweder einen Jahresumsatz von höchstens 2 Millionen Euro erzielt oder dessen Jahresbilanzsumme sich auf höchstens 2 Millionen Euro beläuft",
+          "translation": "employs fewer than ten persons and has either an annual turnover of at most EUR 2 million or an annual balance sheet total of at most EUR 2 million"
+        }
+      ]
+    },
+    "presumptionOfConformity": {
+      "value": {
+        "basis": "harmonised standards whose references are published in the Official Journal",
+        "namesEn301549Version": null
+      },
+      "citations": [
+        {
+          "source": "bfsg-4",
+          "pinpoint": "BFSG § 4",
+          "quote": "Bei Produkten und Dienstleistungen, die harmonisierten Normen oder Teilen davon entsprechen, deren Fundstellen im Amtsblatt der Europäischen Union veröffentlicht worden sind, wird vermutet",
+          "translation": "Products and services that conform to harmonised standards, or parts of them, whose references have been published in the Official Journal of the EU are presumed"
+        }
+      ],
+      "note": "Neither the BFSG nor the BFSGV names EN 301 549, WCAG or any version of a standard."
+    },
+    "supervisoryAuthority": {
+      "value": {
+        "summary": "The BFSG leaves the market surveillance authority to Land law. The Länder run one joint body, the MLBF, based in Magdeburg.",
+        "bodies": [
+          {
+            "name": "Marktüberwachungsstelle der Länder für die Barrierefreiheit von Produkten und Dienstleistungen (MLBF)",
+            "role": "Joint market surveillance body of the 16 Länder",
+            "website": "https://www.mlbf-barrierefrei.de"
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "bfsg-2",
+          "pinpoint": "BFSG § 2 Nummer 22",
+          "quote": "„Marktüberwachungsbehörde“ jede Behörde, die nach Landesrecht für die Durchführung der Marktüberwachung zuständig ist",
+          "translation": "'Market surveillance authority' means any authority responsible for market surveillance under the law of a Land."
+        },
+        {
+          "source": "mlbf-about",
+          "pinpoint": "MLBF website, page 'Die Marktüberwachungsstelle stellt sich vor' (Über Uns)",
+          "quote": "Dabei agieren wir als gemeinsame Überwachungsstelle aller 16 Bundesländer.",
+          "translation": "In doing so we act as the joint surveillance body of all 16 federal states."
+        }
+      ]
+    },
+    "penalties": {
+      "value": {
+        "summary": "Administrative fines under § 37. Offering or providing a non-compliant service (§ 37 Abs. 1 Nr. 8) is in the higher tier.",
+        "currency": "EUR",
+        "maxFine": 100000,
+        "tiers": [
+          {
+            "label": "§ 37 Abs. 1 Nr. 1, 7, 8, 9, 10",
+            "min": 0,
+            "max": 100000
+          },
+          {
+            "label": "other offences in § 37 Abs. 1",
+            "min": 0,
+            "max": 10000
+          }
+        ]
+      },
+      "citations": [
+        {
+          "source": "bfsg-37",
+          "pinpoint": "BFSG § 37 Absatz 2 (offences listed in § 37 Absatz 1)",
+          "quote": "Absatzes 1 Nummer 1, 7, 8, 9 und 10 mit einer Geldbuße bis zu hunderttausend Euro und in den übrigen Fällen … bis zu zehntausend Euro",
+          "translation": "in the cases of paragraph 1 numbers 1, 7, 8, 9 and 10, a fine of up to EUR 100,000, and in the other cases up to EUR 10,000"
+        }
+      ]
+    },
+    "transitionalServiceContracts": {
+      "value": {
+        "rule": "Service contracts concluded before 28 June 2025 may continue unchanged until they expire, but no later than 27 June 2030.",
+        "until": "2030-06-27"
+      },
+      "citations": [
+        {
+          "source": "bfsg-38",
+          "pinpoint": "BFSG § 38 Absatz 1 Satz 2",
+          "quote": "Vor dem 28. Juni 2025 geschlossene Verträge über Dienstleistungen dürfen … nicht länger als bis zum 27. Juni 2030 unverändert fortbestehen.",
+          "translation": "Service contracts concluded before 28 June 2025 may continue unchanged … but no longer than until 27 June 2030."
+        }
+      ]
+    },
+    "transitionalSelfServiceTerminals": {
+      "value": {
+        "rule": "Terminals used before 28 June 2025 may stay in use to the end of their economic life.",
+        "maxYearsAfterFirstUse": 15
+      },
+      "citations": [
+        {
+          "source": "bfsg-38",
+          "pinpoint": "BFSG § 38 Absatz 2",
+          "quote": "Selbstbedienungsterminals, die … vor dem 28. Juni 2025 … eingesetzt werden, dürfen bis zum Ende ihrer wirtschaftlichen Nutzungsdauer, aber nicht länger als fünfzehn Jahre nach ihrer Ingebrauchnahme",
+          "translation": "Self-service terminals used … before 28 June 2025 … may [continue to be used] until the end of their economically useful life, but no longer than fifteen years after first use"
+        }
+      ]
+    }
+  },
+  "unverified": [
+    "The Länder Staatsvertrag (or other Land-law act) that founds the MLBF and designates it as market surveillance authority for BFSG services. The fetched MLBF pages (Startseite, Über Uns, Impressum, Aktuelles, Informationen für Unternehmen, FAQ, Marktüberwachungsstrategien, Kontakt) neither name nor link it. Such a treaty would be published in Land gazettes, which are not among the permitted sources, so no title, date, gazette reference or text is recorded.",
+    "The BGBl. 2025 I Nr. 301 amendment to the BFSGV (Artikel 23 of the Gesetz vom 2. Dezember 2025), which the 2026 amending ordinance cites, was not fetched or checked. Nor was any amendment to the BFSG after Art. 32 G v. 6.5.2024."
+  ]
+}
