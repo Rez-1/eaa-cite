@@ -10,7 +10,6 @@ import {
   JURISDICTIONS,
   parseJurisdictionFile,
   UnknownJurisdictionError,
-  walkCitations,
   type ClaimId,
   type Jurisdiction,
   type ResolvedCitation,
@@ -242,8 +241,9 @@ async function checkData(args: readonly string[], as: string | undefined, json: 
   }
 
   try {
-    const { cited, harmonisation } = parseJurisdictionFile(parsedJson, expected);
-    const citations = walkCitations({ claims: cited.claims, ...(harmonisation ? { harmonisation } : {}) }).length;
+    const loaded = parseJurisdictionFile(parsedJson, expected);
+    const { cited } = loaded;
+    const citations = loaded.citations.length;
     const claims = Object.values(cited.claims).filter(Boolean).length;
     if (json) io.out(JSON.stringify({ file, loads: true, jurisdiction: cited.jurisdiction, claims, citations, sources: cited.sources.length }, null, 2));
     else io.out(`${file} loads: ${cited.jurisdiction}, ${claims} claims, ${citations} citations, ${cited.sources.length} sources.`);

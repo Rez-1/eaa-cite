@@ -42,8 +42,15 @@ export type CitedJurisdiction = Omit<JurisdictionFile, "claims" | "harmonisation
 /** The EU file's harmonisation block, citations resolved. */
 export type CitedHarmonisation = Cite<NonNullable<JurisdictionFile["harmonisation"]>>;
 
-/** What loading one file produces. `harmonisation` is set for the EU file only. */
-export type LoadedJurisdiction = { cited: CitedJurisdiction; harmonisation: CitedHarmonisation | null };
+/**
+ * What loading one file produces. `harmonisation` is set for the EU file only.
+ * `citations` lists every citation in the file, resolved, in file order.
+ */
+export type LoadedJurisdiction = {
+  cited: CitedJurisdiction;
+  harmonisation: CitedHarmonisation | null;
+  citations: CitationEntry[];
+};
 
 /** Where a citation sits in a file: a claim id, or the EU harmonisation block. */
 export type CitationPlace = ClaimId | "harmonisation";
@@ -59,17 +66,18 @@ export class DatasetIntegrityError extends Error {
 }
 
 /** One citation and where it sits, with the path an editor would look for. */
-export type CitationEntry<C = ResolvedCitation> = { place: CitationPlace; path: string; citation: C };
+export type CitationEntry = { place: CitationPlace; path: string; citation: ResolvedCitation };
 
-type HasCitations<C> = { citations: readonly C[] } | undefined;
+/** The same, before its source id is resolved. What the load rules read. */
+type RawEntry = Omit<CitationEntry, "citation"> & { citation: Citation };
 
 /**
- * Every citation in a file, raw or cited: its claims, then the EU harmonisation
- * block. The one place that knows where citations live, so a new
- * citation-bearing field is added here and nowhere else.
+ * Every citation in a file: its claims, then the EU harmonisation block. The
+ * one place that knows where citations live, so a new citation-bearing field is
+ * added here and nowhere else.
  */
-export function walkCitations<C>(file: { claims: Record<string, HasCitations<C>>; harmonisation?: HasCitations<C> }): CitationEntry<C>[] {
-  const entries: CitationEntry<C>[] = [];
+function walkCitations(file: JurisdictionFile): RawEntry[] {
+  const entries: RawEntry[] = [];
   for (const [id, claim] of Object.entries(file.claims)) {
     claim?.citations.forEach((citation, i) =>
       entries.push({ place: id as ClaimId, path: `claims.${id}.citations[${i}]`, citation }),
@@ -81,15 +89,10 @@ export function walkCitations<C>(file: { claims: Record<string, HasCitations<C>>
   return entries;
 }
 
-type RawEntry = CitationEntry<Citation>;
-
-/**
- * The structural rules. Each returns the problems it found; an empty list
- * means the rule holds. Adding a rule is adding an entry here.
- */
-/** A structural rule: the problems it finds in one file, or none. */
+/** A structural rule: the problems it finds in one file. An empty list means the rule holds. */
 type Rule = (file: JurisdictionFile, citations: readonly RawEntry[], expected?: Jurisdiction) => string[];
 
+/** The structural rules. Adding a rule is adding an entry here. */
 const RULES: readonly Rule[] = [
   // data/jurisdictions/se.json must be Sweden's file, not a copy of another.
   function fileIsForItsJurisdiction(file, _citations, expected) {
@@ -217,5 +220,6 @@ export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): L
   return {
     cited: { ...rest, claims },
     harmonisation: harmonisation ? { ...harmonisation, citations: harmonisation.citations.map(resolve) } : null,
+    citations: citations.map((entry) => ({ ...entry, citation: resolve(entry.citation) })),
   };
 }

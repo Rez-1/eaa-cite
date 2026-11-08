@@ -1,6 +1,6 @@
 import { readData } from "../dataPath.js";
 import { resolveConformance, type Assessed, type ConformanceAnswer } from "./conformance.js";
-import { parseJurisdictionFile, walkCitations, type CitationEntry, type CitedClaims, type CitedHarmonisation, type CitedJurisdiction, type LoadedJurisdiction } from "./load.js";
+import { parseJurisdictionFile, type CitationEntry, type CitedClaims, type CitedHarmonisation, type CitedJurisdiction, type LoadedJurisdiction } from "./load.js";
 import { claimsSchema, type ClaimId, type Jurisdiction } from "./schema.js";
 
 export * from "./schema.js";
@@ -63,8 +63,7 @@ export function rawJurisdictionFile(code: string): unknown {
 
 /** Every citation in a jurisdiction: its claims, and for the EU the harmonisation block. */
 export function citationsOf(code: string): CitationEntry[] {
-  const { cited, harmonisation } = shippedFile(code);
-  return walkCitations({ claims: cited.claims, ...(harmonisation ? { harmonisation } : {}) });
+  return shippedFile(code).citations;
 }
 
 /** One claim across every published jurisdiction, and the ones with no value for it. */
