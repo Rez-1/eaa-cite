@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -76,6 +76,32 @@ describe("scan", () => {
     expect(h.calls).toEqual(["html"]);
   });
 
+  it("treats an http(s) argument as a URL even if a file of that name exists", async () => {
+    // "https://shop.test" is also the relative path https:/shop.test.
+    const dir = await mkdtemp(path.join(tmpdir(), "eaa-cli-url-"));
+    await mkdir(path.join(dir, "https:"));
+    await writeFile(path.join(dir, "https:", "shop.test"), "<p>x</p>");
+    const h = harness();
+    const cwd = process.cwd();
+    process.chdir(dir);
+    try {
+      await run(["scan", "https://shop.test"], h.io);
+    } finally {
+      process.chdir(cwd);
+    }
+    expect(h.calls).toEqual(["url https://shop.test"]);
+  });
+
+  it("lists failures outside clause 9", async () => {
+    const report = {
+      ...cleanReport,
+      outsideClause9: [{ ruleId: "target-size", help: "h", helpUrl: "u", impact: "serious" as const, instances: 2, firstTarget: "button" }],
+    };
+    const h = harness(report);
+    await run(["scan", "https://shop.test/"], h.io);
+    expect(h.out()).toContain("Outside clause 9: target-size");
+  });
+
   it("prints the report as JSON with --json", async () => {
     const h = harness();
     await run(["scan", "https://shop.test/", "--json"], h.io);
@@ -100,6 +126,12 @@ describe("obligations", () => {
     expect(text).toContain("hunderttausend Euro");
     expect(text).toContain("https://www.gesetze-im-internet.de/bfsg/__37.html");
     expect(text).toContain("Could not be confirmed:");
+  });
+
+  it("prints a claim's note", async () => {
+    const h = harness();
+    await run(["obligations", "EU", "applicationDate"], h.io);
+    expect(h.out()).toContain("Note: Article 31(3)");
   });
 
   it("narrows to one claim", async () => {

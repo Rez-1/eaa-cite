@@ -17,7 +17,36 @@ export type Expected = {
   failing: Record<string, string[]>;
   needsReview: string[];
   notDetectable: { wcagRef: string; what: string }[];
+  /** Needs-review clauses the first scan found that nobody planted. */
+  needsReviewUnplanted: string[];
 };
+
+/** What a page's PLANTED comments declare, as expected.json should record it. */
+export type Planted = { failing: Record<string, string[]>; needsReview: string[]; notDetectable: string[] };
+
+/**
+ * Reads the PLANTED comments in a test-shop page. Three forms:
+ *   PLANTED <rule> (<wcag refs>)                     axe should fail <rule> under each ref
+ *   PLANTED, axe cannot decide (<ref>)               axe should put <ref> under needs review
+ *   PLANTED, not detectable by axe (<ref>)           axe has no rule for it
+ */
+export function plantedIn(html: string): Planted {
+  const planted: Planted = { failing: {}, needsReview: [], notDetectable: [] };
+  const clauses = (refs: string): string[] => refs.split(",").map((r) => `9.${r.trim()}`);
+  for (const [, comment] of html.matchAll(/<!--\s*PLANTED([\s\S]*?)-->/g)) {
+    const text = comment!.split(":")[0]!; // the part before the description
+    const undecided = /^, axe cannot decide \(([\d.]+)\)/.exec(text);
+    const undetectable = /^, not detectable by axe \(([\d.]+)\)/.exec(text);
+    if (undecided) planted.needsReview.push(`9.${undecided[1]}`);
+    else if (undetectable) planted.notDetectable.push(undetectable[1]!);
+    else {
+      for (const [, rule, refs] of text.matchAll(/([a-z][a-z-]+) \(([\d., ]+)\)/g)) {
+        planted.failing[rule!] = [...new Set([...(planted.failing[rule!] ?? []), ...clauses(refs!)])];
+      }
+    }
+  }
+  return planted;
+}
 
 export async function loadExpected(): Promise<Expected[]> {
   return (JSON.parse(await readFile(new URL("expected.json", SHOP_DIR), "utf8")) as { pages: Expected[] }).pages;
@@ -103,6 +132,11 @@ export function compare(page: Expected, report: ClauseReport): Comparison {
       expectedRules.every((r) => r.found) &&
       unexpected.length === 0 &&
       needsReview.every((r) => r.found) &&
+      sameSet(extraNeedsReview, page.needsReviewUnplanted) &&
       notDetectable.every((d) => !d.wronglyFailing),
   };
+}
+
+function sameSet(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((x) => b.includes(x));
 }

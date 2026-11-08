@@ -57,6 +57,9 @@ describe("tool list", () => {
       ["compare_jurisdictions", "conformance_statement", "explain_criterion", "get_obligations", "scan_html", "scan_url"],
     );
     for (const tool of tools) expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+    // Only scan_url reaches the open web; scan_html runs offline.
+    const openWorld = tools.filter((t) => t.annotations?.openWorldHint).map((t) => t.name);
+    expect(openWorld).toEqual(["scan_url"]);
   });
 });
 

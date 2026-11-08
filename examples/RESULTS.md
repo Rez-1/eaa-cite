@@ -109,7 +109,7 @@ The same server answers the legal questions. From `compare_jurisdictions { claim
 | Jurisdiction | Highest fine stated | Where |
 |---|---|---|
 | EU | none in the text | [Article 30(2)](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019L0882) |
-| SE | 10,000,000 SEK | [Lag (2023:254) 39 § första stycket](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/) |
+| SE | 10,000,000 SEK | [Lag (2023:254) 37 § andra stycket](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/) |
 | DE | 100,000 EUR | [BFSG § 37 Absatz 2 (offences listed in § 37 Absatz 1)](https://www.gesetze-im-internet.de/bfsg/__37.html) |
 | ES | 1,000,000 EUR | [Real Decreto Legislativo 1/2013, artículo 96, letra c)](https://www.boe.es/buscar/act.php?id=BOE-A-2013-12632) |
 
