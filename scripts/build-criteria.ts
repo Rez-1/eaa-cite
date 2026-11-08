@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
-import { buildCriteria, parseWcagCriteria, parseWebClauses, type CriteriaFile } from "../src/criteria/source.js";
+import type { CriteriaFile } from "../src/criteria/index.js";
+import { buildCriteria, parseWcagCriteria, parseWebClauses } from "./lib/criteriaSource.js";
 
 /**
  * Regenerates data/en-301-549-v3.2.1-clause9.json from the two primary sources:

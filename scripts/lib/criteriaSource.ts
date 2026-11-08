@@ -1,5 +1,5 @@
 /**
- * Parsers that turn the two primary sources into the clause 9 table: the text
+ * Build-time parsers (used by `scripts/build-criteria.ts`) that turn the two primary sources into the clause 9 table: the text
  * of EN 301 549 clause 9 (web) and the WCAG Recommendation's HTML. Pure, so the
  * extraction is testable without the PDF.
  *
@@ -14,7 +14,7 @@
  * to prove the pairing, then dropped (ADR 0005).
  */
 
-import { z } from "zod";
+import type { Criterion } from "../../src/criteria/index.js";
 
 /** One non-void clause 9 requirement, as printed in the EN. */
 export type WebClause = {
@@ -37,19 +37,6 @@ export type WcagCriterion = {
   level: "A" | "AA" | "AAA";
   /** Section id, e.g. "non-text-content". */
   anchor: string;
-};
-
-/** One row of the published clause 9 table. */
-export type Criterion = {
-  enClause: string;
-  wcagRef: string;
-  level: "A" | "AA";
-  /** The W3C name of the success criterion, e.g. "Non-text Content". */
-  name: string;
-  /** The criterion's section in the WCAG Recommendation. */
-  wcagUrl: string;
-  /** 1-based page of the EN PDF the clause heading is on. */
-  enPage: number;
 };
 
 const CLAUSE_HEADING = /^(9\.\d+\.\d+\.\d+) (.+)$/;
@@ -150,43 +137,4 @@ export function buildCriteria(
       enPage: clause.page,
     };
   });
-}
-
-const documentSchema = z.object({
-  url: z.url(),
-  bytes: z.number().int().positive(),
-  sha256: z.string().regex(/^[0-9a-f]{64}$/),
-});
-
-/**
- * The checked-in clause 9 table plus the exact bytes it was extracted from.
- * Written by `scripts/build-criteria.ts` and validated on load, because a hand
- * edit is the way a wrong clause would get in.
- */
-const criteriaFileSchema = z.object({
-  enVersion: z.string().min(1),
-  wcagVersion: z.string().min(1),
-  sources: z.object({
-    en: documentSchema.extend({ pages: z.number().int().positive() }),
-    wcag: documentSchema,
-  }),
-  extractedAt: z.iso.datetime(),
-  criteria: z
-    .array(
-      z.object({
-        enClause: z.string().regex(/^9\.\d+\.\d+\.\d+$/),
-        wcagRef: z.string().regex(/^\d+\.\d+\.\d+$/),
-        level: z.enum(["A", "AA"]),
-        name: z.string().min(1),
-        wcagUrl: z.url(),
-        enPage: z.number().int().positive(),
-      }),
-    )
-    .min(1),
-});
-
-export type CriteriaFile = z.infer<typeof criteriaFileSchema>;
-
-export function parseCriteriaFile(json: unknown): CriteriaFile {
-  return criteriaFileSchema.parse(json);
 }
