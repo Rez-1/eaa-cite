@@ -148,13 +148,14 @@ claude mcp add eaa-cite -- node /absolute/path/to/eaa-cite/dist/mcp/bin.js
 ## Using it as a library
 
 ```ts
-import { getJurisdiction, harmonisationFor, scanUrl, mapToClauses } from "eaa-cite";
+import { getJurisdiction, conformanceFor, scanUrl, mapToClauses } from "eaa-cite";
 
 const es = getJurisdiction("ES");
 es.claims.penalties.value.maxFine; // 1000000
 es.claims.penalties.citations[0].pinpoint; // "Ley 11/2023, artículo 30, apartado 1, párrafo primero"
 
-harmonisationFor("SE").status; // "not_cited"
+conformanceFor("SE").status; // "not_cited"
+conformanceFor("SE").sentence; // the fixed sentence a report prints, with its citations alongside
 
 const report = mapToClauses(await scanUrl("http://localhost:3000"));
 ```

@@ -3,12 +3,15 @@ import {
   citationsOf,
   compareClaim,
   DatasetIntegrityError,
+  conformanceFor,
+  euHarmonisation,
   getJurisdiction,
-  harmonisationFor,
   parseJurisdictionFile,
   PUBLISHED,
   rawJurisdictionFile,
-  resolveHarmonisation,
+  resolveConformance,
+  VersionMismatchError,
+  type CitedJurisdiction,
   type Published,
 } from "../src/dataset/index.js";
 import { wordCount } from "../src/dataset/quotes.js";
@@ -89,6 +92,24 @@ describe("loading", () => {
     expect(problems).toHaveLength(3); // the bad id, bfsg-37 now uncited, the missing translation
     expect(() => parseJurisdictionFile(de, "DE")).toThrow(/jurisdictions\/de\.json does not load/);
   });
+
+  it("requires the EU file to record the harmonisation status", () => {
+    const eu = copyOf("EU");
+    delete eu.harmonisation;
+    expect(problemsLoading(eu, "EU")).toContain("harmonisation: the EU file must record the harmonisation status");
+  });
+
+  it("refuses a harmonisation block in a member state's file", () => {
+    const se = copyOf("SE");
+    se.harmonisation = copyOf("EU").harmonisation;
+    expect(problemsLoading(se, "SE")).toContain(
+      "harmonisation: only the EU file records it; member states take the EU answer (ADR 0003)",
+    );
+  });
+
+  it("keeps harmonisation off what callers read", () => {
+    for (const code of PUBLISHED) expect(getJurisdiction(code), code).not.toHaveProperty("harmonisation");
+  });
 });
 
 /** Re-verify at least yearly. Statutes get amended; this makes the data say so. */
@@ -152,47 +173,76 @@ describe("queries", () => {
   });
 });
 
-describe("harmonisation", () => {
-  it("is recorded once, at EU level", () => {
-    expect(getJurisdiction("EU").harmonisation).toBeDefined();
-    for (const code of ["SE", "DE", "ES"]) expect(getJurisdiction(code).harmonisation, code).toBeUndefined();
-  });
+/** A copy of a member state whose law names an EN 301 549 version, which none does today. */
+function namingVersion(code: Published, version: string): CitedJurisdiction {
+  const file = structuredClone(getJurisdiction(code));
+  file.claims.presumptionOfConformity.value.namesEn301549Version = version;
+  return file;
+}
 
+describe("conformance", () => {
   it("is cited only with evidence from the Official Journal mechanism", () => {
     // If someone flips the status to "cited", they must also add the
     // Commission implementing decision as a legislation source.
-    const eu = getJurisdiction("EU");
-    if (eu.harmonisation?.status === "cited") {
-      expect(eu.harmonisation.citations.map((c) => c.source.kind)).toContain("legislation");
+    if (euHarmonisation.status === "cited") {
+      expect(euHarmonisation.citations.map((c) => c.source.kind)).toContain("legislation");
     }
   });
 
   it("is never supported by a Web Accessibility Directive citation alone", () => {
-    const eu = getJurisdiction("EU");
-    const quotes = eu.harmonisation!.citations.map((c) => c.quote).join(" ");
-    if (/2016\/2102/.test(quotes)) expect(eu.harmonisation!.status).not.toBe("cited");
+    const quotes = euHarmonisation.citations.map((c) => c.quote).join(" ");
+    if (/2016\/2102/.test(quotes)) expect(euHarmonisation.status).not.toBe("cited");
   });
 
   it("gives member states with no version in their own law the EU answer, with EU citations", () => {
     for (const code of ["SE", "DE", "ES"]) {
-      const resolved = harmonisationFor(code);
-      expect(resolved.basis, code).toBe("eu");
-      expect(resolved.status, code).toBe(getJurisdiction("EU").harmonisation!.status);
-      for (const c of resolved.citations) expect(c.jurisdiction).toBe("EU");
+      const answer = conformanceFor(code);
+      expect(answer, code).toMatchObject({ status: euHarmonisation.status, basis: "eu", enVersion: "EN 301 549 v3.2.1" });
+      for (const c of answer.citations) expect(c.jurisdiction).toBe("EU");
     }
   });
 
-  it("makes a member state whose law names a version national_only, citing its own law", () => {
-    const se = structuredClone(getJurisdiction("SE"));
-    se.claims.presumptionOfConformity.value.namesEn301549Version = "EN 301 549 v3.2.1";
-    const resolved = resolveHarmonisation(se, getJurisdiction("EU"));
-    expect(resolved).toMatchObject({ status: "national_only", basis: "national-law", enVersion: "EN 301 549 v3.2.1" });
-    for (const c of resolved.citations) expect(c.jurisdiction).toBe("SE");
+  it("uses the caller's version and baseline when the law names none", () => {
+    const answer = conformanceFor("ES", { enVersion: "EN 301 549 v3.2.1", wcagVersion: "WCAG 2.1 AA" });
+    expect(answer.sentence).toContain("EN 301 549 v3.2.1 (WCAG 2.1 AA) as a technical benchmark");
+    expect(answer.mayClaimPresumptionOfConformity).toBe(false);
   });
 
-  it("never resolves the EU file to national_only", () => {
+  it("makes a member state whose law names a version national_only, citing its own law", () => {
+    const answer = resolveConformance(namingVersion("SE", "EN 301 549 v3.1.1"), euHarmonisation);
+    expect(answer).toMatchObject({ status: "national_only", basis: "national-law", enVersion: "EN 301 549 v3.1.1" });
+    expect(answer.sentence).toContain("EN 301 549 v3.1.1 (WCAG 2.1 AA), the version named directly in SE national law");
+    for (const c of answer.citations) expect(c.jurisdiction).toBe("SE");
+  });
+
+  it("names the law's version even when the caller passes none", () => {
+    // The old server passed "EN 301 549 v3.2.1" by default here, whatever the law said.
+    const answer = resolveConformance(namingVersion("DE", "EN 301 549 v3.1.1"), euHarmonisation, {});
+    expect(answer.enVersion).toBe("EN 301 549 v3.1.1");
+  });
+
+  it("refuses an assessment against a version the law does not name", () => {
+    const de = namingVersion("DE", "EN 301 549 v3.1.1");
+    expect(() => resolveConformance(de, euHarmonisation, { enVersion: "EN 301 549 v3.2.1" })).toThrow(VersionMismatchError);
+    expect(() => resolveConformance(de, euHarmonisation, { enVersion: "EN 301 549 v3.2.1" })).toThrow(
+      /DE law names EN 301 549 v3\.1\.1, but the assessment used EN 301 549 v3\.2\.1/,
+    );
+    expect(() => resolveConformance(de, euHarmonisation, { enVersion: "EN 301 549 v3.1.1" })).not.toThrow();
+  });
+
+  it("dates the answer by the oldest cited source, not the file's first source", () => {
+    const de = namingVersion("DE", "EN 301 549 v3.1.1");
+    // bfsg-2 is listed first; the presumption claim cites bfsg-4. Age bfsg-2 only.
+    const first = de.sources[0]!;
+    expect(first.id).toBe("bfsg-2");
+    first.retrievedAt = "2020-01-01";
+    for (const c of de.claims.presumptionOfConformity.citations) c.source = { ...c.source, retrievedAt: "2026-10-01" };
+    expect(resolveConformance(de, euHarmonisation).checkedAt).toBe("2026-10-01");
+  });
+
+  it("never makes the EU file national_only", () => {
     const eu = structuredClone(getJurisdiction("EU"));
     eu.claims.presumptionOfConformity.value.namesEn301549Version = "EN 301 549 v3.2.1";
-    expect(resolveHarmonisation(eu, eu).status).not.toBe("national_only");
+    expect(resolveConformance(eu, euHarmonisation).basis).toBe("eu");
   });
 });

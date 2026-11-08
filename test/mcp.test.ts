@@ -117,6 +117,21 @@ describe("compare_jurisdictions", () => {
 });
 
 describe("conformance_statement", () => {
+  it("shares status, basis, checkedAt and citations with get_obligations", async () => {
+    for (const country of ["EU", "SE", "DE", "ES"]) {
+      const statement = body(await client.callTool({ name: "conformance_statement", arguments: { country } }));
+      const { harmonisation } = body(await client.callTool({ name: "get_obligations", arguments: { country } }));
+      const shared = (o: any) => ({ status: o.status, basis: o.basis, checkedAt: o.checkedAt, citations: o.citations });
+      expect(shared(statement), country).toEqual(shared(harmonisation));
+      expect(statement.basis, country).toBe("eu");
+    }
+  });
+
+  it("reports the versions it used", async () => {
+    const result = body(await client.callTool({ name: "conformance_statement", arguments: { country: "SE", wcagVersion: "WCAG 2.1 AA" } }));
+    expect(result).toMatchObject({ enVersion: "EN 301 549 v3.2.1", wcagVersion: "WCAG 2.1 AA" });
+  });
+
   it("claims no presumption of conformity while nothing is cited under the EAA", async () => {
     const result = body(await client.callTool({ name: "conformance_statement", arguments: { country: "ES" } }));
     expect(result.mayClaimPresumptionOfConformity).toBe(false);

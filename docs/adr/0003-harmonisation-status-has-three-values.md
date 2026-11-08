@@ -3,10 +3,13 @@
 Whether conformity with EN 301 549 gives a presumption of conformity under the
 European Accessibility Act is one of `cited`, `not_cited` or `national_only`
 (`src/standards/harmonisation.ts`). The answer is recorded once, in
-`data/jurisdictions/eu.json`, with its citations and the date it was checked.
-A member state takes that answer unless its own law names an EN 301 549 version,
-in which case it is `national_only` and cites its own law (`resolveHarmonisation`
-in `src/dataset/index.ts`).
+`data/jurisdictions/eu.json`, with its citations and the date it was checked; a
+load rule refuses a harmonisation block in any other file. A member state takes
+that answer unless its own law names an EN 301 549 version, in which case it is
+`national_only` and cites its own law.
+
+`conformanceFor` (`src/dataset/conformance.ts`, `src/dataset/index.ts`) is the
+one place that works this out. Both MCP tools that report it read from it.
 
 ## The trap
 
@@ -23,6 +26,17 @@ cites the Commission's WAD page for that reason.
 As of 2026-11-08 no standard is cited under 2019/882. The Commission's list of
 harmonised standards has one accessibility entry, for public sector websites and
 apps.
+
+## The version the sentence names
+
+For `national_only`, the sentence names the version the law names. An assessment
+against a different version is refused with `VersionMismatchError`, since the
+sentence would otherwise say "the version named directly in DE national law"
+next to a version the law does not name. For the other two statuses the caller's
+version is used, defaulting to EN 301 549 v3.2.1.
+
+The answer's `checkedAt` is the oldest retrieval date among the sources it cites:
+it is no fresher than its oldest evidence.
 
 ## Why `national_only` does not permit the presumption
 

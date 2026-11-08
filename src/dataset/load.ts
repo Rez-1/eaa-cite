@@ -29,11 +29,19 @@ type Cite<C> = C extends { citations: Citation[] } ? Omit<C, "citations"> & { ci
 
 export type CitedClaims = { [K in keyof Claims]: Cite<Claims[K]> };
 
-/** A jurisdiction file as callers see it: same content, citations resolved. */
-export type CitedJurisdiction = Omit<JurisdictionFile, "claims" | "harmonisation"> & {
-  claims: CitedClaims;
-  harmonisation?: Cite<NonNullable<JurisdictionFile["harmonisation"]>>;
-};
+/**
+ * A jurisdiction file as callers see it: same content, citations resolved. It
+ * has no harmonisation field: only the EU file records one, and a member
+ * state's answer is worked out by conformanceFor, so a field that is undefined
+ * for every member state would read like an answer when it isn't one.
+ */
+export type CitedJurisdiction = Omit<JurisdictionFile, "claims" | "harmonisation"> & { claims: CitedClaims };
+
+/** The EU file's harmonisation block, citations resolved. */
+export type CitedHarmonisation = Cite<NonNullable<JurisdictionFile["harmonisation"]>>;
+
+/** What loading one file produces. `harmonisation` is set for the EU file only. */
+export type LoadedJurisdiction = { cited: CitedJurisdiction; harmonisation: CitedHarmonisation | null };
 
 /** Where a citation sits in a file: a claim id, or the EU harmonisation block. */
 export type CitationPlace = ClaimId | "harmonisation";
@@ -85,6 +93,13 @@ const RULES: readonly ((file: JurisdictionFile, citations: readonly RawEntry[], 
       : [];
   },
 
+  // The status is recorded once, at EU level (ADR 0003).
+  function harmonisationIsRecordedAtEuLevelOnly(file) {
+    if (file.jurisdiction === "EU" && !file.harmonisation) return ["harmonisation: the EU file must record the harmonisation status"];
+    if (file.jurisdiction !== "EU" && file.harmonisation) return ["harmonisation: only the EU file records it; member states take the EU answer (ADR 0003)"];
+    return [];
+  },
+
   // Two sources with one id would make every citation of that id ambiguous.
   function sourceIdsAreUnique(file) {
     const seen = new Set<string>();
@@ -124,7 +139,7 @@ const RULES: readonly ((file: JurisdictionFile, citations: readonly RawEntry[], 
  * DatasetIntegrityError listing every problem found, so a hand edit can be
  * fixed in one pass.
  */
-export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): CitedJurisdiction {
+export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): LoadedJurisdiction {
   const label = expected ? `jurisdictions/${expected.toLowerCase()}.json` : "jurisdiction file";
 
   const parsed = jurisdictionFileSchema.safeParse(json);
@@ -151,8 +166,7 @@ export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): C
 
   const { harmonisation, ...rest } = file;
   return {
-    ...rest,
-    claims,
-    ...(harmonisation ? { harmonisation: { ...harmonisation, citations: harmonisation.citations.map(resolve) } } : {}),
+    cited: { ...rest, claims },
+    harmonisation: harmonisation ? { ...harmonisation, citations: harmonisation.citations.map(resolve) } : null,
   };
 }

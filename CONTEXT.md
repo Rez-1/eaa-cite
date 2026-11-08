@@ -51,6 +51,11 @@ Whether conformity with EN 301 549 gives a presumption of conformity under the E
 `cited`, `not_cited` or `national_only`. Recorded once, in the EU file (ADR 0003).
 _Avoid_: harmonised (on its own it is ambiguous between the EAA and the Web Accessibility Directive)
 
+**Conformance answer**:
+What a report may say about the standard in one jurisdiction: the harmonisation status,
+where it comes from (EU or national law), the version the sentence names, the fixed
+sentence, and the citations. Worked out by `conformanceFor`; dated by its oldest citation.
+
 **Clause 9 criterion**:
 One of the 50 WCAG 2.1 A and AA success criteria as EN 301 549 v3.2.1 numbers them, e.g.
 9.1.4.3 for WCAG 1.4.3.

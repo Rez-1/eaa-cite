@@ -5,15 +5,15 @@ import { criteria, criteriaFile, findCriterion } from "../criteria/index.js";
 import {
   claimIdSchema,
   compareClaim,
+  conformanceFor,
   getJurisdiction,
-  harmonisationFor,
   PUBLISHED,
   rawJurisdictionFile,
   UnknownJurisdictionError,
+  VersionMismatchError,
   type CitedJurisdiction,
 } from "../dataset/index.js";
 import { mapToClauses, type AxeRun, type ClauseReport } from "../scan/map.js";
-import { conformanceStatement } from "../standards/harmonisation.js";
 
 /**
  * The MCP server. No model runs inside it: every answer is a lookup in the
@@ -46,8 +46,13 @@ function failure(message: string): CallToolResult {
   return { isError: true, content: [{ type: "text", text: message }] };
 }
 
+/**
+ * get_obligations carries the same harmonisation fields as conformance_statement,
+ * minus the sentence. A version named in law is already in the claims, under
+ * presumptionOfConformity.
+ */
 function obligations(file: CitedJurisdiction) {
-  const { status, basis, checkedAt, citations } = harmonisationFor(file.jurisdiction);
+  const { status, basis, checkedAt, citations } = conformanceFor(file.jurisdiction);
   return {
     jurisdiction: file.jurisdiction,
     name: file.name,
@@ -112,27 +117,20 @@ export function createServer(options: ServerOptions): McpServer {
       title: "Conformance sentence for an accessibility report",
       description:
         "The sentence an audit report can print about the standard it assessed against, chosen from the verified " +
-        "harmonisation status in that jurisdiction. Fixed wording; says whether a presumption of conformity may be claimed.",
+        "harmonisation status in that jurisdiction. Fixed wording; says whether a presumption of conformity may be claimed. " +
+        "Where national law names an EN 301 549 version, that version is used, and a different enVersion is refused.",
       inputSchema: {
         country,
-        enVersion: z.string().default("EN 301 549 v3.2.1").describe("The EN 301 549 version assessed against."),
-        wcagVersion: z.string().default("WCAG 2.1 AA").describe("The WCAG baseline assessed against."),
+        enVersion: z.string().optional().describe('The EN 301 549 version assessed against. Default "EN 301 549 v3.2.1", or the version national law names.'),
+        wcagVersion: z.string().optional().describe('The WCAG baseline assessed against. Default "WCAG 2.1 AA".'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ country: code, enVersion, wcagVersion }) => {
       try {
-        const file = getJurisdiction(code);
-        const harmonisation = harmonisationFor(file.jurisdiction);
-        const statement = conformanceStatement({ status: harmonisation.status, enVersion, wcagVersion, memberState: file.jurisdiction });
-        return json({
-          ...statement,
-          status: harmonisation.status,
-          checkedAt: harmonisation.checkedAt,
-          citations: harmonisation.citations,
-        });
+        return json(conformanceFor(code, { enVersion, wcagVersion }));
       } catch (error) {
-        if (error instanceof UnknownJurisdictionError) return failure(error.message);
+        if (error instanceof UnknownJurisdictionError || error instanceof VersionMismatchError) return failure(error.message);
         throw error;
       }
     },

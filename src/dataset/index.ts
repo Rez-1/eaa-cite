@@ -1,10 +1,11 @@
 import { readData } from "../dataPath.js";
-import type { HarmonisationStatus } from "../standards/harmonisation.js";
-import { parseJurisdictionFile, walkCitations, type CitationEntry, type CitedClaims, type CitedJurisdiction, type ResolvedCitation } from "./load.js";
+import { resolveConformance, type Conformance } from "./conformance.js";
+import { parseJurisdictionFile, walkCitations, type CitationEntry, type CitedClaims, type CitedHarmonisation, type CitedJurisdiction, type LoadedJurisdiction } from "./load.js";
 import { claimsSchema, type ClaimId, type Jurisdiction } from "./schema.js";
 
 export * from "./schema.js";
 export * from "./load.js";
+export * from "./conformance.js";
 
 /**
  * Questions about the shipped dataset. Every answer carries resolved
@@ -19,12 +20,15 @@ export type Published = (typeof PUBLISHED)[number];
 export const claimIdSchema = claimsSchema.keyof();
 
 const raw = new Map<Published, unknown>();
-const cited = new Map<Published, CitedJurisdiction>();
+const loaded = new Map<Published, LoadedJurisdiction>();
 for (const code of PUBLISHED) {
   const json = readData(`jurisdictions/${code.toLowerCase()}.json`);
   raw.set(code, json);
-  cited.set(code, parseJurisdictionFile(json, code));
+  loaded.set(code, parseJurisdictionFile(json, code));
 }
+
+/** The EU file's harmonisation block. The load rules guarantee it exists. */
+export const euHarmonisation: CitedHarmonisation = loaded.get("EU")!.harmonisation!;
 
 export function isPublished(code: string): code is Published {
   return (PUBLISHED as readonly string[]).includes(code);
@@ -45,7 +49,7 @@ function published(code: string): Published {
 
 /** One jurisdiction, by code in any case. */
 export function getJurisdiction(code: string): CitedJurisdiction {
-  return cited.get(published(code))!;
+  return loaded.get(published(code))!.cited;
 }
 
 /** The file exactly as checked in. For showing the source data, not for reading values. */
@@ -55,7 +59,8 @@ export function rawJurisdictionFile(code: string): unknown {
 
 /** Every citation in a jurisdiction: its claims, and for the EU the harmonisation block. */
 export function citationsOf(code: string): CitationEntry[] {
-  return walkCitations(getJurisdiction(code));
+  const { cited, harmonisation } = loaded.get(published(code))!;
+  return walkCitations({ claims: cited.claims, ...(harmonisation ? { harmonisation } : {}) });
 }
 
 /** One claim across every published jurisdiction, and the ones with no value for it. */
@@ -67,44 +72,14 @@ export function compareClaim<K extends ClaimId>(claim: K) {
   return { claim, rows, absent: PUBLISHED.filter((code) => !getJurisdiction(code).claims[claim]) };
 }
 
-export type ResolvedHarmonisation = {
-  status: HarmonisationStatus;
-  /** Where the answer comes from: the EU-level check, or the member state's own law. */
-  basis: "eu" | "national-law";
-  enVersion: string | null;
-  checkedAt: string;
-  citations: (ResolvedCitation & { jurisdiction: Published })[];
-};
-
 /**
- * The harmonisation status that applies in a member state. A member state whose
- * law names an EN 301 549 version is `national_only`; otherwise it takes the
- * EU-level answer. Each citation says which jurisdiction it came from, because
- * an EU citation in a Swedish answer still points at EUR-Lex.
+ * What a report may say about the standard in one jurisdiction: status, the
+ * version that governs, the fixed sentence and its citations. Throws
+ * VersionMismatchError if the law names a version other than `assessed.enVersion`.
  */
-export function harmonisationFor(code: string): ResolvedHarmonisation {
-  return resolveHarmonisation(getJurisdiction(code), getJurisdiction("EU"));
-}
-
-/** The rule behind harmonisationFor, taking both files so it can be tested on edited copies. */
-export function resolveHarmonisation(file: CitedJurisdiction, eu: CitedJurisdiction): ResolvedHarmonisation {
-  if (!eu.harmonisation) throw new Error("The EU file has no harmonisation block");
-  const named = file.claims.presumptionOfConformity.value.namesEn301549Version;
-
-  if (file.jurisdiction !== "EU" && named) {
-    return {
-      status: "national_only",
-      basis: "national-law",
-      enVersion: named,
-      checkedAt: file.sources[0]!.retrievedAt,
-      citations: file.claims.presumptionOfConformity.citations.map((c) => ({ ...c, jurisdiction: file.jurisdiction as Published })),
-    };
-  }
-  return {
-    status: eu.harmonisation.status,
-    basis: "eu",
-    enVersion: null,
-    checkedAt: eu.harmonisation.checkedAt,
-    citations: eu.harmonisation.citations.map((c) => ({ ...c, jurisdiction: "EU" as const })),
-  };
+export function conformanceFor(
+  code: string,
+  assessed: { enVersion?: string | undefined; wcagVersion?: string | undefined } = {},
+): Conformance {
+  return resolveConformance(getJurisdiction(code), euHarmonisation, assessed);
 }
