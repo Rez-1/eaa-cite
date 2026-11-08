@@ -1,0 +1,62 @@
+name: Bug
+description: The server, the library or a script does something wrong.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a wrong legal value, use the "Data correction" form instead.
+        For a security problem, do not open an issue: use GitHub private vulnerability reporting (see SECURITY.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead. Paste error messages as text.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The tool or function you called, with its input. For a scan, the URL or a small HTML sample.
+      placeholder: |
+        scan_html { html: "<!doctype html><html>…</html>" }
+        or
+        getJurisdiction("SE").claims.penalties
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: eaa-cite version or commit
+      placeholder: "0.1.0, or the output of git rev-parse --short HEAD"
+    validations:
+      required: false
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "output of node --version"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "macOS 15, Ubuntu 24.04, …"
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client
+      description: The project is tested with Claude Desktop and Claude Code.
+      options:
+        - Claude Desktop
+        - Claude Code
+        - Another MCP client
+        - None (library or script)
+    validations:
+      required: true

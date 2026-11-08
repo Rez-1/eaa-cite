@@ -1,13 +1,25 @@
 name: verify-sources
 
-# Re-reads every official source and checks each quote is still there. A
-# failure means a law was amended or a page moved: open the run, read which
-# claim is affected, and update the data by hand.
+# Re-reads every official source and checks each quote is still there.
+#
+# On a pull request that touches data/, this is the live check of a new or
+# changed quote, so contributors without Node still get one.
+#
+# On the weekly schedule, a failure means a law was amended or a page moved. The
+# job then opens an issue (or comments on the open one) naming the affected
+# claims; a person updates the data by hand.
 
 on:
+  pull_request:
+    paths:
+      - "data/**"
   schedule:
     - cron: "17 6 * * 1" # Mondays 06:17 UTC
   workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   verify:
@@ -19,9 +31,33 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run verify-sources -- --json > verification.json || (cat verification.json && exit 1)
+      - name: Check every quote against its source
+        run: npm run --silent verify-sources -- --json > verification.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: verification
           path: verification.json
+      - name: Open or update the verify-sources issue
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The weekly source check failed on $(date -u +%Y-%m-%d). Run: $RUN_URL"
+            echo
+            echo "| Jurisdiction | Source | Status | Detail |"
+            echo "|---|---|---|---|"
+            jq -r '.results[] | select(.status == "quote-missing" or .status == "fetch-failed")
+              | "| \(.jurisdiction) | \(.source) | \(.status) | \(.error // ([.missing[]? | "\(.claim) (\(.pinpoint))"] | join("; "))) |"' verification.json
+            echo
+            echo "See docs/verification.md for what to do."
+          } > body.md
+          gh label create verify-sources --color D73A49 --description "Weekly source check failed" 2>/dev/null || true
+          existing=$(gh issue list --label verify-sources --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Source check failed" --label verify-sources --body-file body.md
+          fi

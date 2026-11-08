@@ -1,0 +1,74 @@
+name: Data correction
+description: A value in the dataset is wrong, out of date or missing its best source.
+title: "Data: "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for checking the data. Every value has to rest on a verbatim quote from an official source, so the most useful report gives the source, the pinpoint and the quote.
+        The format is described in docs/data-format.md, and how to make the change yourself in docs/contributing-data.md.
+  - type: dropdown
+    id: jurisdiction
+    attributes:
+      label: Jurisdiction
+      options:
+        - EU (Directive (EU) 2019/882)
+        - SE (Sweden)
+        - DE (Germany)
+        - ES (Spain)
+    validations:
+      required: true
+  - type: dropdown
+    id: claim
+    attributes:
+      label: Claim
+      description: The claim the value belongs to. Choose "other" for a source note, a translation or the unverified list.
+      options:
+        - applicationDate
+        - transpositionDeadline
+        - microenterpriseExemption
+        - microenterpriseDefinition
+        - presumptionOfConformity
+        - nationalStandardReference
+        - supervisoryAuthority
+        - penalties
+        - transitionalServiceContracts
+        - transitionalSelfServiceTerminals
+        - harmonisation (EU file)
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong
+      description: What the dataset says now, and what it should say.
+      placeholder: "penalties.maxFine is 100000 EUR; since the amendment of … the highest fine is …"
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source URL and pinpoint
+      description: An official source (legislation site, official gazette, European Commission, or the supervisory authority's own site) and the exact place in it.
+      placeholder: |
+        https://www.gesetze-im-internet.de/bfsg/__37.html
+        BFSG § 37 Absatz 2
+    validations:
+      required: true
+  - type: textarea
+    id: quote
+    attributes:
+      label: Quote
+      description: The text that states the correct value, word for word in the source's language. Mark any omission with "…". At most 30 words. An English translation helps if the source is not in English.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Amendments, related provisions, or how you would like to be credited in CHANGELOG.md.
+    validations:
+      required: false

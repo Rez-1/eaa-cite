@@ -20,21 +20,30 @@ calls it the way Claude Desktop does.
 
 ## Why
 
-Accessibility scanners report which WCAG criteria a page fails. The next question,
-what the law says about it, is usually answered from memory or a blog post. The
-answers that matter most (the highest fine, whether a small business is exempt,
-how long an old contract may run) are the ones most often paraphrased wrong or
-copied from the neighbouring country.
+The legal answers that matter most about accessibility (the highest fine, whether
+a small business is exempt, how long an old contract may run) are the ones most
+often paraphrased wrong or copied from the neighbouring country. Here every value
+is a claim with a citation: the source, the article, a verbatim quote in the
+source's language, and an English translation. A weekly job re-reads every
+official source and fails if a quote is no longer there. The longer version is in
+[docs/architecture.md](docs/architecture.md#why-citations).
 
-So every value in this dataset is a claim with a citation: the source, the
-article, a verbatim quote in the source's language, and an English translation.
-A weekly job re-reads every official source and fails if a quote is no longer
-there.
+## What is in it
 
-## The dataset
+- A dataset of four jurisdiction files in [`data/jurisdictions/`](data/jurisdictions):
+  the directive itself, Sweden, Germany and Spain.
+- The EN 301 549 v3.2.1 clause 9 table: 50 WCAG 2.1 A and AA criteria with their
+  EN clause numbers, in [`data/en-301-549-v3.2.1-clause9.json`](data/en-301-549-v3.2.1-clause9.json).
+- An MCP server with six tools: `get_obligations`, `compare_jurisdictions`,
+  `conformance_statement`, `explain_criterion`, `scan_url` and `scan_html`. No
+  model runs inside it.
+- A TypeScript library with the same lookups and the scanner.
+- `npm run verify-sources`, which checks every quote against its live source.
+- `eaa-cite/guarded`, a sample wrapper for spend-capped structured LLM calls.
 
-Four files in [`data/jurisdictions/`](data/jurisdictions): the directive itself,
-Sweden, Germany and Spain. Each value below links back to a quote in those files.
+## The dataset at a glance
+
+Each value links back to a quote in the [jurisdiction files](data/jurisdictions).
 
 | | EU | SE | DE | ES |
 |---|---|---|---|---|
@@ -47,179 +56,75 @@ Sweden, Germany and Spain. Each value below links back to a quote in those files
 | Names an EN 301 549 version | no | no | no | no |
 | Harmonisation status | not_cited | not_cited | not_cited | not_cited |
 
-The last row is the one people get wrong. EN 301 549 v3.2.1 is a harmonised
-standard under the Web Accessibility Directive, which covers public sector
-websites. As of 2026-11-08 no standard is cited under the EAA, so meeting EN 301
-549 gives a shop no presumption of conformity. [ADR 0003](docs/adr/0003-harmonisation-status-has-three-values.md)
-explains how the data model keeps the two directives apart.
+## Quick start
 
-Each file also has an `unverified` list of what was looked for and could not be
-confirmed from an official source. Germany's, for example, notes that the treaty
-founding its market surveillance body is published only in Land gazettes.
-
-[`data/en-301-549-v3.2.1-clause9.json`](data/en-301-549-v3.2.1-clause9.json) is
-the clause 9 table: 50 WCAG 2.1 A and AA criteria with their EN clause numbers,
-extracted from the ETSI PDF and the W3C Recommendation, with the SHA-256 of both.
-
-## How a claim is checked
-
-```
-npm run verify-sources
-```
-
-```
-ok      EU dir-2019-882  sha256 a47628739bdf
-ok      SE sfs-2023-254  sha256 dd2fefd932fc
-ok      DE bfsg-37  sha256 1c702279e5cc
-manual  DE bgbl-2021-i-2970
-ok      ES ley-11-2023  sha256 492e4de258eb
-...
-1 source(s) need a person to re-check: https://www.bgbl.de/...
-```
-
-The script fetches each source, reduces the HTML to readable text, and looks for
-every quote that cites it, piece by piece around any ellipsis. It exits non-zero
-on a missing quote and never edits the data. The German federal gazette serves
-PDFs through a JavaScript viewer, so that source is marked for a person to check
-instead of being skipped silently.
-
-A file only loads if every citation names a listed source, every source is cited
-and every non-English quote has a translation; a broken file fails with every
-problem listed at once. The tests add the rules that depend on the date or on
-judgement: quotes stay under 30 words, no source was retrieved more than a year
-ago, and nothing outside the EU is filed under the EAA.
-
-## The MCP server
-
-| Tool | What it returns |
-|---|---|
-| `get_obligations` | Every claim for one jurisdiction, each with its citations, plus the harmonisation status that applies there |
-| `compare_jurisdictions` | One claim across all jurisdictions, for example `penalties` |
-| `conformance_statement` | The sentence an audit report can print about the standard it used, and whether it may claim a presumption of conformity |
-| `explain_criterion` | An EN 301 549 clause 9 criterion by WCAG number or EN clause |
-| `scan_url` | axe-core on an http(s) URL, with each violation filed under its EN clause |
-| `scan_html` | The same for markup you already have; network requests are blocked |
-
-No model runs inside the server. Lookups are deterministic, and the scan tools run
-axe in headless Chromium.
-
-Scan results have no "passed" list. An axe pass on a criterion means its rules
-found nothing, not that the criterion was evaluated, so the result lists the
-criteria axe did not check instead ([ADR 0004](docs/adr/0004-an-axe-pass-is-not-an-evaluation.md)):
-
-```
-> scan_html { html: <test/fixtures/shop-with-defects.html> }
-
-  9.1.1.1  Non-text Content           image-alt
-  9.1.4.3  Contrast (Minimum)         color-contrast
-  9.3.1.1  Language of Page           html-has-lang
-  9.4.1.2  Name, Role, Value          button-name, label
-  4 failing, 0 need review, 43 of 50 not checked by axe
-```
-
-### Running it
-
-Node 22 or later.
+Node 22 or later. Tested on Ubuntu and macOS.
 
 ```bash
 git clone https://github.com/Rez-1/eaa-cite && cd eaa-cite
 npm install
 npx playwright install chromium
 npm run build
+claude mcp add eaa-cite -- node "$(pwd)/dist/mcp/bin.js"
 ```
 
-Then add it to your MCP client. For Claude Desktop, in
-`claude_desktop_config.json`:
+The last line adds the server to Claude Code. For Claude Desktop and other
+clients, see [docs/mcp-setup.md](docs/mcp-setup.md). Full install notes are in
+[docs/install.md](docs/install.md).
 
-```json
-{
-  "mcpServers": {
-    "eaa-cite": { "command": "node", "args": ["/absolute/path/to/eaa-cite/dist/mcp/bin.js"] }
-  }
-}
-```
-
-For Claude Code:
-
-```bash
-claude mcp add eaa-cite -- node /absolute/path/to/eaa-cite/dist/mcp/bin.js
-```
-
-## Using it as a library
+As a library:
 
 ```ts
-import { getJurisdiction, conformanceFor, scanUrl, mapToClauses } from "eaa-cite";
+import { getJurisdiction, conformanceFor } from "eaa-cite";
 
-const es = getJurisdiction("ES");
-es.claims.penalties.value.maxFine; // 1000000
-es.claims.penalties.citations[0].pinpoint; // "Ley 11/2023, artículo 30, apartado 1, párrafo primero"
-
+getJurisdiction("ES").claims.penalties.value.maxFine; // 1000000
 conformanceFor("SE").status; // "not_cited"
-conformanceFor("SE").sentence; // the fixed sentence a report prints, with its citations alongside
-
-const report = mapToClauses(await scanUrl("http://localhost:3000"));
 ```
 
-## `eaa-cite/guarded`
+## Documentation
 
-A separate module, not used by the server: a wrapper for structured LLM calls with
-spend caps enforced in code. It checks a ledger before each call, validates output
-against a Zod schema, retries a bounded number of times, and writes a ledger row
-for every outcome, failures included. It is the agent wrapper from the private
-system this repo was extracted from, with the Postgres table replaced by a
-`SpendLedger` interface. There is an Anthropic adapter; the SDK is an optional
-peer dependency. See [ADR 0006](docs/adr/0006-spend-caps-are-code.md) and
-[`src/guarded/run.test.ts`](src/guarded/run.test.ts).
+Use it:
 
-## Design decisions
+- [docs/install.md](docs/install.md): requirements, install from source, update, uninstall
+- [docs/mcp-setup.md](docs/mcp-setup.md): Claude Desktop, Claude Code, troubleshooting
+- [docs/tools.md](docs/tools.md): every tool and resource, with inputs, outputs and errors
+- [docs/library.md](docs/library.md): the TypeScript API
+- [docs/guarded.md](docs/guarded.md): `eaa-cite/guarded`, the spend-capped LLM wrapper (a sample)
 
-1. [Every claim carries its citation](docs/adr/0001-every-claim-carries-its-citation.md)
-2. [axe-core is the only scanner](docs/adr/0002-axe-core-is-the-only-scanner.md)
-3. [Harmonisation status has three values and is recorded once, at EU level](docs/adr/0003-harmonisation-status-has-three-values.md)
-4. [An axe pass is not an evaluation of a criterion](docs/adr/0004-an-axe-pass-is-not-an-evaluation.md)
-5. [Publish clause numbers, not ETSI's text](docs/adr/0005-publish-clause-numbers-not-etsi-text.md)
-6. [Spend caps are code, not prompt instructions](docs/adr/0006-spend-caps-are-code.md)
+Read the results:
 
-[docs/case-study.md](docs/case-study.md) describes the private audit system this
-came from: the state machine, idempotent queues, findings tiered by how they were
-produced, and the gates a report passes before it can be signed.
+- [docs/results.md](docs/results.md): how to read a scan report, an obligations answer and a conformance answer
+- [docs/limitations.md](docs/limitations.md): what the data and the scans do not cover
+- [docs/faq.md](docs/faq.md): common questions, including how this compares with other tools
+- [examples/README.md](examples/README.md): the test shop and its results
 
-## Tests
+Contribute data:
 
-```bash
-npm test
-```
+- [docs/contributing-data.md](docs/contributing-data.md): report or correct a value, add a jurisdiction
+- [docs/data-format.md](docs/data-format.md): every field in a jurisdiction file and the rules it must pass
 
-91 tests, including contract tests that drive the server through an MCP client,
-and real Chromium scans of a five-page test shop with planted defects
-([`examples/test-shop/`](examples/test-shop)). The scan tests need
-`npx playwright install chromium` once; nothing else needs the network.
+Check the data:
 
-```bash
-npm run try -- --w3c
-```
+- [docs/verification.md](docs/verification.md): how each quote is checked against its source, and the weekly job
 
-runs the whole thing through the stdio server: the test shop against its
-[`expected.json`](examples/test-shop/expected.json), plus W3C's Before and After
-Demonstration site. The output is in [`examples/RESULTS.md`](examples/RESULTS.md).
+Read the code:
 
-## Related work
+- [docs/architecture.md](docs/architecture.md): layout, data flow, modules, testing, design decisions
+- [docs/adr/](docs/adr): the six architecture decision records
+- [docs/case-study.md](docs/case-study.md): the private audit system this came from
+- [CONTEXT.md](CONTEXT.md): the glossary
 
-[holmdigital/a11y-hd](https://github.com/holmdigital/a11y-hd) covers far more
-ground: 17 jurisdictions, a CLI with PDF and JUnit output, accessibility statement
-generation and a React component library. Its legal data links each law. This
-repo covers four jurisdictions and cites each value inside them.
+Project:
 
-Several community MCP servers wrap axe-core for scanning. This one adds the
-EN 301 549 mapping and the legal lookups.
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
-## Limitations
+## Not legal advice
 
-This is a research aid, not legal advice. Four jurisdictions, services only, with
-e-commerce as the main case; products and sector-specific services (banking,
-transport, e-books) are only partly covered. Spain's penalty bands are the State
-regime, which applies where an autonomous community has none of its own. axe-core
-finds a minority of accessibility defects; the rest need a person.
+This is a research aid. Check a value against its cited source before you rely
+on it. What is not covered is in [docs/limitations.md](docs/limitations.md).
 
 ## Licence
 
