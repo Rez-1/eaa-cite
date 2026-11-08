@@ -94,6 +94,13 @@ async function readCapped(response: Response): Promise<Uint8Array> {
   return Buffer.concat(chunks);
 }
 
+/** Node reports a network failure as "fetch failed" and puts the useful part in `cause`. */
+function reasonOf(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+  return cause ? `${error.message}: ${cause.code ? `${cause.code} ` : ""}${cause.message ?? ""}`.trim() : error.message;
+}
+
 function isStale(source: Source, now = Date.now()): boolean {
   return (now - Date.parse(source.retrievedAt)) / 86_400_000 > MAX_AGE_DAYS;
 }
@@ -109,7 +116,7 @@ async function verifySource(jurisdiction: string, source: Source, citing: readon
     });
     return { ...base, status: missing.length ? "quote-missing" : "ok", sha256, ...(missing.length ? { missing } : {}) };
   } catch (error) {
-    return { ...base, status: "fetch-failed", error: error instanceof Error ? error.message : String(error) };
+    return { ...base, status: "fetch-failed", error: reasonOf(error) };
   }
 }
 
