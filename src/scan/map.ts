@@ -69,6 +69,17 @@ export type ClauseReport = {
   summary: { failing: number; needsReview: number; notCheckedByAxe: number; ofCriteria: number };
 };
 
+/**
+ * A selector is built from the page's own ids and classes, so a hostile page
+ * controls its text. Long enough to find the element, short enough that it
+ * cannot carry a paragraph of instructions to an assistant reading the report.
+ */
+const MAX_TARGET_CHARS = 120;
+
+function truncate(text: string, max: number): string {
+  return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+}
+
 const IMPACT_ORDER: Record<Impact, number> = { critical: 0, serious: 1, moderate: 2, minor: 3 };
 
 function hitOf(rule: AxeRuleResult): RuleHit {
@@ -79,7 +90,7 @@ function hitOf(rule: AxeRuleResult): RuleHit {
     helpUrl: rule.helpUrl,
     impact: rule.impact ?? "minor",
     instances: rule.nodes.length,
-    firstTarget: first.map((part) => (Array.isArray(part) ? part.join(" >>> ") : String(part))).join(" "),
+    firstTarget: truncate(first.map((part) => (Array.isArray(part) ? part.join(" >>> ") : String(part))).join(" "), MAX_TARGET_CHARS),
   };
 }
 

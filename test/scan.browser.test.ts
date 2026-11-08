@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { chromium } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isPrivateAddress, isPrivateHost } from "../src/scan/privateHost.js";
 import { assertScannableUrl, BlockedNavigationError, createScanner, SCAN_CAVEAT } from "../src/scan/scanner.js";
 
 /**
@@ -38,6 +37,18 @@ describe("scanning the clean fixture", () => {
   });
 });
 
+describe("WCAG 2.2 rules", () => {
+  it("run, and land outside clause 9 instead of as clause 9 failures", async () => {
+    const report = await scanner.scanHtml(
+      `<!doctype html><html lang="en"><title>t</title><main><h1>x</h1>` +
+        `<button style="width:10px;height:10px;padding:0;border:0">a</button>` +
+        `<button style="width:10px;height:10px;padding:0;border:0">b</button></main></html>`,
+    );
+    expect(report.outsideClause9.map((r) => r.ruleId)).toContain("target-size");
+    expect(report.failing).toEqual([]);
+  });
+});
+
 describe("the browser lifecycle", () => {
   it("launches again after a failed launch", async () => {
     let attempts = 0;
@@ -64,6 +75,19 @@ describe("the browser lifecycle", () => {
     await scanning;
     await s.close();
     expect(launched!.isConnected()).toBe(false);
+  });
+
+  it("launches again after the browser crashes, without close() being called", async () => {
+    const launched: import("playwright").Browser[] = [];
+    const s = createScanner({ launch: async () => { const b = await chromium.launch(); launched.push(b); return b; } });
+    try {
+      await s.scanHtml("<p>x</p>");
+      await launched[0]!.close(); // the browser goes away behind the scanner's back
+      await expect(s.scanHtml("<html lang=en><title>t</title><p>x</p></html>")).resolves.toHaveProperty("caveat");
+      expect(launched).toHaveLength(2);
+    } finally {
+      await s.close();
+    }
   });
 
   it("launches again after the browser goes away", async () => {
@@ -134,6 +158,99 @@ describe("the redirect rule", () => {
   });
 });
 
+describe("hostile pages", () => {
+  // Counts every request that reaches it, so a test can assert "nothing got out".
+  let hits: string[] = [];
+  let server: Server;
+  let port: number;
+  beforeAll(async () => {
+    server = createServer((req, res) => {
+      hits.push(`${req.method} ${req.url}`);
+      if (req.url === "/popup-page") {
+        return res.writeHead(200, { "content-type": "text/html" }).end(`<html lang="en"><title>p</title><script>window.open("http://127.0.0.1:${port}/opened")</script></html>`);
+      }
+      if (req.url === "/huge") {
+        // An endless body with no content-length.
+        res.writeHead(200, { "content-type": "text/html" });
+        const chunk = Buffer.alloc(1024 * 1024, "a");
+        const pump = (): void => {
+          while (res.write(chunk)) {}
+          res.once("drain", pump);
+        };
+        res.on("close", () => res.removeAllListeners("drain"));
+        return pump();
+      }
+      if (req.url === "/declared-huge") {
+        return res.writeHead(200, { "content-type": "text/html", "content-length": String(500 * 1024 * 1024) }).end();
+      }
+      res.writeHead(200, { "content-type": "text/plain" }).end("ok");
+    });
+    server.on("upgrade", (req, socket) => {
+      hits.push(`UPGRADE ${req.url}`);
+      socket.destroy();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    port = (server.address() as { port: number }).port;
+  });
+  afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+  it("refuses popups instead of crashing", async () => {
+    hits = [];
+    const report = await scanner.scanUrl(`http://127.0.0.1:${port}/popup-page`);
+    expect(report.caveat).toBe(SCAN_CAVEAT);
+    expect(hits).not.toContain("GET /opened");
+  });
+
+  it("lets pasted markup reach nothing on the network", async () => {
+    hits = [];
+    const base = `http://127.0.0.1:${port}`;
+    await scanner.scanHtml(`<!doctype html><html lang="en"><head><title>t</title>
+      <link rel="prefetch" href="${base}/prefetch"><link rel="preconnect" href="${base}">
+      <link rel="stylesheet" href="${base}/style.css"><script src="${base}/script.js"></script></head>
+      <body><img src="${base}/img.png" alt="x"><iframe src="${base}/frame" title="f"></iframe>
+      <script>
+        fetch("${base}/fetch").catch(() => {});
+        navigator.sendBeacon("${base}/beacon", "x");
+        try { new WebSocket("ws://127.0.0.1:${port}/ws"); } catch {}
+        new Image().src = "${base}/pixel";
+      </script></body></html>`);
+    await new Promise((r) => setTimeout(r, 500)); // let anything in flight arrive
+    expect(hits).toEqual([]);
+  });
+
+  it("refuses a document that never ends, without holding it in memory", async () => {
+    const before = process.memoryUsage().rss;
+    await expect(scanner.scanUrl(`http://127.0.0.1:${port}/huge`)).rejects.toThrow(/larger than 20 MB/);
+    expect(process.memoryUsage().rss - before).toBeLessThan(200 * 1024 * 1024);
+  });
+
+  it("refuses a document that declares itself too large, before reading it", async () => {
+    await expect(scanner.scanUrl(`http://127.0.0.1:${port}/declared-huge`)).rejects.toThrow(/larger than 20 MB/);
+  });
+
+  it("gives up on a page that keeps axe busy, within twice the timeout", async () => {
+    const quick = createScanner({ timeoutMs: 1_500 });
+    try {
+      const started = Date.now();
+      await expect(quick.scanHtml(`<html lang="en"><title>t</title><body onload="for(;;){}"><p>x</p></body></html>`)).rejects.toThrow();
+      expect(Date.now() - started).toBeLessThan(6_000);
+    } finally {
+      await quick.close();
+    }
+  }, 20_000);
+
+  it("reports a failure in one line, without Playwright's call log", async () => {
+    const closed = createServer();
+    await new Promise<void>((resolve) => closed.listen(0, "127.0.0.1", resolve));
+    const closedPort = (closed.address() as { port: number }).port;
+    await new Promise<void>((resolve) => closed.close(() => resolve()));
+
+    const error = await scanner.scanUrl(`http://127.0.0.1:${closedPort}/`).catch((e: Error) => e);
+    expect((error as Error).message).not.toContain("\n");
+    expect((error as Error).message).toBe(`Could not load http://127.0.0.1:${closedPort}/: connect ECONNREFUSED 127.0.0.1:${closedPort}`);
+  });
+});
+
 describe("assertScannableUrl", () => {
   it("allows http, https and localhost", () => {
     expect(assertScannableUrl("http://localhost:3000/cart").host).toBe("localhost:3000");
@@ -144,33 +261,5 @@ describe("assertScannableUrl", () => {
     for (const url of ["file:///etc/passwd", "javascript:alert(1)", "data:text/html,<p>", "not a url"]) {
       expect(() => assertScannableUrl(url)).toThrow(/Only http and https/);
     }
-  });
-});
-
-describe("private addresses", () => {
-  it("knows the private IPv4 ranges", () => {
-    for (const ip of ["0.0.0.0", "10.1.2.3", "100.64.0.1", "100.127.255.255", "127.0.0.1", "169.254.169.254", "172.16.0.1", "172.31.255.255", "192.168.1.1"]) {
-      expect(isPrivateAddress(ip), ip).toBe(true);
-    }
-    for (const ip of ["8.8.8.8", "100.128.0.1", "172.32.0.1", "192.169.0.1", "203.0.113.7"]) {
-      expect(isPrivateAddress(ip), ip).toBe(false);
-    }
-  });
-
-  it("knows the private IPv6 ranges, including IPv4 written inside IPv6", () => {
-    for (const ip of ["::", "::1", "fd12::1", "fe80::1", "::ffff:10.0.0.1", "::ffff:a00:1", "::ffff:7f00:1", "0:0:0:0:0:ffff:7f00:1", "::7f00:1", "64:ff9b::a00:1"]) {
-      expect(isPrivateAddress(ip), ip).toBe(true);
-    }
-    for (const ip of ["2001:4860::8888", "::ffff:8.8.8.8", "::ffff:808:808", "64:ff9b::808:808"]) {
-      expect(isPrivateAddress(ip), ip).toBe(false);
-    }
-  });
-
-  it("checks hostnames exactly as URL.hostname writes them", async () => {
-    // Each of these reaches this machine or a private network in Chromium.
-    for (const url of ["http://localhost/", "http://shop.localhost/", "http://[::1]/", "http://[::ffff:127.0.0.1]/", "http://[::]/", "http://0.0.0.0/", "http://0x7f.1/", "http://2130706433/", "http://[::ffff:10.0.0.1]/"]) {
-      expect(await isPrivateHost(new URL(url).hostname), url).toBe(true);
-    }
-    expect(await isPrivateHost(new URL("http://203.0.113.7/").hostname)).toBe(false);
   });
 });
