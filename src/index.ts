@@ -26,19 +26,6 @@ export {
   type ClaimId,
   type Source,
 } from "./dataset/index.js";
-export { mapToClauses, type AxeRun, type ClauseReport } from "./scan/index.js";
-export {
-  createScanner,
-  assertScannableUrl,
-  SCAN_CAVEAT,
-  BlockedNavigationError,
-  UnsupportedUrlError,
-  type BrowserScanner,
-  type Scanner,
-  type ScannerOptions,
-  type ScanReport,
-} from "./scan/scanner.js";
-// The fixed sentences are reached through conformanceFor, which applies the
-// version and EU/national rules first (ADR 0003); they are not exported here.
-export { HARMONISATION_STATUSES, type HarmonisationStatus } from "./standards/harmonisation.js";
-export { createServer } from "./mcp/server.js";
+// The pure clause 9 mapping only. The scanner, which loads Playwright, is the
+// `eaa-cite/scan` entry, so importing the dataset never loads a browser library.
+export { mapToClauses, type AxeRun, type ClauseReport } from "./scan/map.js";

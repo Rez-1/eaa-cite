@@ -182,13 +182,16 @@ criteriaFile.sources.en.sha256; // "1eee3a1841a94567da8e59f3b19a782ce9ab081c386b
 
 ## Scan a page
 
+The scanner is its own entry, `eaa-cite/scan`, because it loads Playwright. The
+package root does not, so importing the dataset never loads a browser library.
+
 `createScanner` returns a scanner that owns one Chromium. It launches Chromium
 on the first scan, launches it again after a failed launch or a crash, and shuts
 it down on `close()`. Install Chromium first: `npx playwright install chromium`.
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { createScanner } from "eaa-cite";
+import { createScanner } from "eaa-cite/scan";
 
 const scanner = createScanner({ timeoutMs: 15_000 });
 try {
@@ -218,7 +221,7 @@ try {
 | `ScanReport` | A `ClauseReport` plus `caveat`. This is what the MCP scan tools return. |
 | `SCAN_CAVEAT` | The fixed caveat text carried on every report. |
 | `assertScannableUrl(raw)` | Parses a URL and returns a `URL`. Throws `UnsupportedUrlError` unless it is http or https. |
-| `mapToClauses(run)` | Maps an axe-core result (`AxeRun`) onto clause 9 and returns a `ClauseReport`. Pure, no browser. Use it if you run axe yourself. |
+| `mapToClauses(run)` | Maps an axe-core result (`AxeRun`) onto clause 9 and returns a `ClauseReport`. Pure, no browser. Use it if you run axe yourself. Also exported from the package root. |
 
 `scanUrl` and `scanHtml` behave as the `scan_url` and `scan_html` tools do,
 including the redirect rule and the blocked requests; see

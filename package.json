@@ -13,6 +13,7 @@
   },
   "exports": {
     ".": "./dist/index.js",
+    "./scan": "./dist/scan/index.js",
     "./guarded": "./dist/guarded/index.js"
   },
   "files": [

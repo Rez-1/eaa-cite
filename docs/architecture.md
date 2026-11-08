@@ -116,7 +116,9 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
 - `axeTags.ts`: reads WCAG numbers out of axe rule tags.
 - `map.ts`: `mapToClauses` sorts an axe result into failing, needs review and
   not checked by axe. It is pure, so it is tested without a browser.
-- `index.ts`: the pure parts only, so importing them does not load Playwright.
+- `index.ts`: the `eaa-cite/scan` entry. The package root takes only `map.ts`
+  from this module, so importing the dataset does not load Playwright;
+  `test/entry.test.ts` fails if it ever does.
 
 ### cli
 
