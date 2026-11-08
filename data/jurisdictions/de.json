@@ -70,6 +70,16 @@
       "retrievedAt": "2026-11-08",
       "verify": "quote",
       "note": "The authority describing itself. Not a designating provision."
+    },
+    {
+      "id": "bfsgv-22",
+      "title": "BFSGV § 22 Inkrafttreten",
+      "identifier": "BGBl. I S. 928",
+      "kind": "consolidated-text",
+      "url": "https://www.gesetze-im-internet.de/bfsgv/__22.html",
+      "language": "de",
+      "retrievedAt": "2026-11-08",
+      "verify": "quote"
     }
   ],
   "claims": {
@@ -83,9 +93,15 @@
           "pinpoint": "Gesetz vom 16. Juli 2021 (BGBl. I S. 2970), Artikel 3 Satz 1",
           "quote": "Dieses Gesetz tritt vorbehaltlich der Sätze 2 bis 4 am 28. Juni 2025 in Kraft.",
           "translation": "Subject to sentences 2 to 4, this Act enters into force on 28 June 2025."
+        },
+        {
+          "source": "bfsgv-22",
+          "pinpoint": "BFSGV § 22",
+          "quote": "Diese Verordnung tritt am 28. Juni 2025 in Kraft.",
+          "translation": "This Ordinance enters into force on 28 June 2025."
         }
       ],
-      "note": "A few provisions (BFSG § 3 Abs. 2 and Abs. 3 Satz 2 and 3, § 13 Abs. 3, § 17 Abs. 6) took effect the day after promulgation. The BFSGV also applies from 28 June 2025 (BFSGV § 22)."
+      "note": "A few provisions (BFSG § 3 Abs. 2 and Abs. 3 Satz 2 and 3, § 13 Abs. 3, § 17 Abs. 6) took effect the day after promulgation."
     },
     "microenterpriseExemption": {
       "value": {
@@ -129,7 +145,7 @@
           "translation": "Products and services that conform to harmonised standards, or parts of them, whose references have been published in the Official Journal of the EU are presumed"
         }
       ],
-      "note": "Neither the BFSG nor the BFSGV names EN 301 549, WCAG or any version of a standard."
+      "note": "The BFSG names no version of a standard. The BFSG and the BFSGV were searched on 2026-11-08 for \"EN 301 549\" and \"WCAG\" with no match; that is a search, so it is a note and not a citation."
     },
     "supervisoryAuthority": {
       "value": {
@@ -165,12 +181,12 @@
         "tiers": [
           {
             "label": "§ 37 Abs. 1 Nr. 1, 7, 8, 9, 10",
-            "min": 0,
+            "min": null,
             "max": 100000
           },
           {
             "label": "other offences in § 37 Abs. 1",
-            "min": 0,
+            "min": null,
             "max": 10000
           }
         ]

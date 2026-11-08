@@ -14,6 +14,10 @@ describe("readableText", () => {
     expect(readableText("&ldquo;microempresa&rdquo; &ndash; espa&ntilde;ol &bogus;")).toBe(`"microempresa" - español &bogus;`);
   });
 
+  it("decodes each entity once", () => {
+    expect(readableText("a &amp;lt;b&amp;gt; &amp;amp;")).toBe("a &lt;b&gt; &amp;");
+  });
+
   it("folds typographic quotes and dashes", () => {
     expect(readableText("„Kleinstunternehmen“ – ‘microenterprise’")).toBe(`"Kleinstunternehmen" - 'microenterprise'`);
   });

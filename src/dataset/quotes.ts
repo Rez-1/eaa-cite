@@ -26,14 +26,15 @@ export function readableText(html: string): string {
       .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;|&#160;|&#xa0;/gi, " ")
-      .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
       .replace(/&#39;|&apos;/g, "'")
       .replace(/&([a-zA-Z]+);/g, (whole, name: string) => NAMED[name] ?? whole)
       .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
-      .replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16))),
+      .replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
+      // Last, so "&amp;lt;" becomes the text "&lt;", not "<".
+      .replace(/&amp;/g, "&"),
   );
 }
 

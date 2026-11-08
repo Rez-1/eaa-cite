@@ -108,7 +108,7 @@
     },
     "penalties": {
       "value": {
-        "summary": "Orders to comply (32–34 §§), which may carry a conditional fine (35 §, no amount stated), and an administrative penalty fee (37–40 §§).",
+        "summary": "Orders to comply (32–34 §§), which may carry a conditional fine (35 §, no amount stated), and an administrative penalty fee (37–40 §§). No fee is imposed in minor cases (37 §).",
         "currency": "SEK",
         "maxFine": 10000000,
         "tiers": [
@@ -125,6 +125,12 @@
           "pinpoint": "Lag (2023:254) 39 § första stycket",
           "quote": "Sanktionsavgiften ska bestämmas till lägst 10 000 kronor och högst 10 000 000 kronor.",
           "translation": "The administrative penalty fee shall be set at no less than SEK 10,000 and no more than SEK 10,000,000."
+        },
+        {
+          "source": "sfs-2023-254",
+          "pinpoint": "Lag (2023:254) 37 § andra stycket",
+          "quote": "I ringa fall ska någon sanktionsavgift inte beslutas.",
+          "translation": "In minor cases, no administrative penalty fee shall be imposed."
         }
       ]
     },

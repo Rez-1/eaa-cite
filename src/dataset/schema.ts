@@ -105,7 +105,8 @@ export const claimsSchema = z.strictObject({
       /** Highest fine the law states. Null when it states none. */
       maxFine: amount.nullable(),
       tiers: z
-        .array(z.strictObject({ label: z.string().min(1), min: amount, max: amount }))
+        // `min` is null where the law states only a ceiling ("bis zu").
+        .array(z.strictObject({ label: z.string().min(1), min: amount.nullable(), max: amount }))
         .optional(),
     }),
   ),

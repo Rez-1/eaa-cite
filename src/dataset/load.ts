@@ -1,3 +1,4 @@
+import { isOfficialSourceUrl } from "./officialHosts.js";
 import {
   jurisdictionFileSchema,
   type Citation,
@@ -12,10 +13,10 @@ import {
  * Reads one jurisdiction file and turns it into the form every caller uses:
  * each citation carries its full source instead of a source id.
  *
- * A file that breaks the structural rules of ADR 0001 does not load. The rules
- * that depend on the date or on editorial judgement (quote length, source age,
- * official domains) are tests, not load checks: a load check on age would stop
- * the published package working a year after release.
+ * A file that breaks the structural rules of ADR 0001 does not load. Quote
+ * length is a test, not a load check, because it is editorial judgement; source
+ * age is checked by verify-sources, never here, because a check on the date
+ * would stop a published copy working a year after release.
  */
 
 /** A citation with its source filled in. */
@@ -101,6 +102,13 @@ const RULES: readonly Rule[] = [
     if (file.jurisdiction === "EU" && !file.harmonisation) return ["harmonisation: the EU file must record the harmonisation status"];
     if (file.jurisdiction !== "EU" && file.harmonisation) return ["harmonisation: only the EU file records it; member states take the EU answer (ADR 0003)"];
     return [];
+  },
+
+  // Only official publishers count, and the source checker fetches these URLs.
+  function sourcesAreOnOfficialHosts(file) {
+    return file.sources
+      .filter((s) => !isOfficialSourceUrl(s.url))
+      .map((s) => `sources: "${s.id}" is not on an official host (${s.url}); see src/dataset/officialHosts.ts`);
   },
 
   // Two sources with one id would make every citation of that id ambiguous.

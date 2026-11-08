@@ -93,6 +93,14 @@ describe("loading", () => {
     expect(problemsLoading(de, "DE").some((p) => p.includes("pinpiont"))).toBe(true);
   });
 
+  it("rejects a source that is not on an official host", () => {
+    const de = copyOf("DE");
+    de.sources[0].url = "http://169.254.169.254/latest/meta-data/";
+    expect(problemsLoading(de, "DE")).toContain(
+      'sources: "bfsg-2" is not on an official host (http://169.254.169.254/latest/meta-data/); see src/dataset/officialHosts.ts',
+    );
+  });
+
   it("reports schema problems with their path", () => {
     const de = copyOf("DE");
     de.claims.penalties.citations = [];
@@ -127,8 +135,6 @@ describe("loading", () => {
   });
 });
 
-/** Re-verify at least yearly. Statutes get amended; this makes the data say so. */
-const MAX_AGE_DAYS = 365;
 /** Short quotes: enough to check, not a reproduction of the text. */
 const MAX_QUOTE_WORDS = 30;
 
@@ -139,20 +145,13 @@ describe("editorial rules on the shipped data", () => {
     for (const { code, path, citation } of all) expect(wordCount(citation.quote), `${code} ${path}`).toBeLessThanOrEqual(MAX_QUOTE_WORDS);
   });
 
-  it(`retrieved every source within the last ${MAX_AGE_DAYS} days and not in the future`, () => {
-    const now = Date.now();
+  it("has no source retrieved in the future", () => {
+    // Staleness (over a year old) is checked by verify-sources, not here, so a
+    // clone does not start failing its tests a year after the data was checked.
+    const tomorrow = Date.now() + 86_400_000;
     for (const code of PUBLISHED) {
-      for (const source of getJurisdiction(code).sources) {
-        const age = (now - Date.parse(source.retrievedAt)) / 86_400_000;
-        expect(age, `${code} ${source.id}`).toBeGreaterThanOrEqual(-1);
-        expect(age, `${code} ${source.id} is stale: run npm run verify-sources and update retrievedAt`).toBeLessThanOrEqual(MAX_AGE_DAYS);
-      }
+      for (const source of getJurisdiction(code).sources) expect(Date.parse(source.retrievedAt), `${code} ${source.id}`).toBeLessThan(tomorrow);
     }
-  });
-
-  it("uses official sources only: EUR-Lex, the Commission, national gazettes and statute sites, or the authority itself", () => {
-    const official = /^https:\/\/(eur-lex\.europa\.eu|single-market-economy\.ec\.europa\.eu|www\.riksdagen\.se|www\.gesetze-im-internet\.de|www\.bgbl\.de|www\.boe\.es|www\.mlbf-barrierefrei\.de)\//;
-    for (const code of PUBLISHED) for (const s of getJurisdiction(code).sources) expect(s.url, `${code} ${s.id}`).toMatch(official);
   });
 
   it("files nothing outside the EU under the EAA", () => {
@@ -253,6 +252,16 @@ describe("conformance", () => {
     first.retrievedAt = "2020-01-01";
     for (const c of de.claims.presumptionOfConformity.citations) c.source = { ...c.source, retrievedAt: "2026-10-01" };
     expect(resolveConformance(de, euHarmonisation).checkedAt).toBe("2026-10-01");
+  });
+
+  it("dates an EU answer by its oldest citation, whatever order they are in", () => {
+    const eu = structuredClone(euHarmonisation);
+    const [first, second] = eu.citations;
+    first!.source = { ...first!.source, retrievedAt: "2026-11-05" };
+    second!.source = { ...second!.source, retrievedAt: "2026-10-01" };
+    expect(resolveConformance(getJurisdiction("SE"), eu).checkedAt).toBe("2026-10-01");
+    eu.citations.reverse();
+    expect(resolveConformance(getJurisdiction("SE"), eu).checkedAt).toBe("2026-10-01");
   });
 
   it("never makes the EU file national_only", () => {

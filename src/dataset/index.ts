@@ -6,6 +6,7 @@ import { claimsSchema, type ClaimId, type Jurisdiction } from "./schema.js";
 export * from "./schema.js";
 export * from "./load.js";
 export * from "./conformance.js";
+export * from "./officialHosts.js";
 
 /**
  * Questions about the shipped dataset. Every answer carries resolved
