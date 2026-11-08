@@ -133,6 +133,12 @@ describe("runStructured", () => {
     expect(g.ledger.runs[0]).toMatchObject({ outcome: "refusal", error: "cyber", costMicros: 1500 });
   });
 
+  it("records the input, output and parent run when asked", async () => {
+    const g = guard(scripted({ kind: "parsed", output: { severity: "minor" }, usage: usage(1, 1) }));
+    await runStructured(g, task, "Button has no name", { record: { input: "Button has no name", parentRunId: "run-0" } });
+    expect(g.ledger.runs[0]).toMatchObject({ input: "Button has no name", output: { severity: "minor" }, parentRunId: "run-0" });
+  });
+
   it("records an API error, keeping the tokens spent on earlier attempts", async () => {
     const g = guard(scripted({ kind: "unparsed", reason: "max_tokens", usage: usage(1000, 0) }, new Error("overloaded")));
     await expect(runStructured(g, task, "text")).rejects.toThrow("overloaded");
@@ -144,13 +150,13 @@ describe("JsonlLedger", () => {
   it("appends one line per run and sums them back", async () => {
     const file = path.join(await mkdtemp(path.join(tmpdir(), "ledger-")), "runs.jsonl");
     const ledger = new JsonlLedger(file);
-    expect(await ledger.spentSince(new Date(0))).toBe(0);
+    expect(await ledger.spent({})).toBe(0);
 
     const g = guard(scripted({ kind: "parsed", output: { severity: "minor" }, usage: usage(1000, 0) }), ledger);
     await runStructured(g, task, "text", { scope: "s" });
 
     expect((await readFile(file, "utf8")).trim().split("\n")).toHaveLength(1);
-    expect(await ledger.spentInScope("s")).toBe(3000);
-    expect(await ledger.spentSince(new Date("2026-11-08T00:00:00Z"), "other")).toBe(0);
+    expect(await ledger.spent({ scope: "s" })).toBe(3000);
+    expect(await ledger.spent({ since: new Date("2026-11-08T00:00:00Z"), scope: "other" })).toBe(0);
   });
 });

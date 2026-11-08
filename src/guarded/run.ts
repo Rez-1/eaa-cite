@@ -95,10 +95,10 @@ function startOfUtcDay(date: Date): Date {
 }
 
 async function assertUnderCaps(guard: Guard, scope: string | undefined, now: Date): Promise<void> {
-  const today = await guard.ledger.spentSince(startOfUtcDay(now));
+  const today = await guard.ledger.spent({ since: startOfUtcDay(now) });
   if (today >= guard.caps.dailyMicros) throw new SpendCapExceededError("daily", today, guard.caps.dailyMicros);
   if (scope !== undefined && guard.caps.perScopeMicros !== undefined) {
-    const inScope = await guard.ledger.spentInScope(scope);
+    const inScope = await guard.ledger.spent({ scope });
     if (inScope >= guard.caps.perScopeMicros) throw new SpendCapExceededError("scope", inScope, guard.caps.perScopeMicros);
   }
 }
@@ -107,7 +107,12 @@ export async function runStructured<TInput, TOutput>(
   guard: Guard,
   task: Task<TInput, TOutput>,
   input: TInput,
-  options: { scope?: string } = {},
+  options: {
+    /** Groups runs for the per-scope cap. */
+    scope?: string;
+    /** Extra fields for the ledger row, for an audit log. */
+    record?: { input?: unknown; parentRunId?: string };
+  } = {},
 ): Promise<Result<TOutput>> {
   const now = guard.now ?? (() => new Date());
   const started = now();
@@ -119,13 +124,16 @@ export async function runStructured<TInput, TOutput>(
   let attempts = 0;
   let lastProblem = "no attempt made";
 
-  const record = async (outcome: Outcome, error?: string): Promise<number> => {
+  const record = async (outcome: Outcome, error?: string, output?: unknown): Promise<number> => {
     const cost = costMicros(guard.rate, usage);
     await guard.ledger.record({
       id: runId,
       task: task.name,
       model: task.model,
       ...(options.scope !== undefined ? { scope: options.scope } : {}),
+      ...(options.record?.parentRunId !== undefined ? { parentRunId: options.record.parentRunId } : {}),
+      ...(options.record && "input" in options.record ? { input: options.record.input } : {}),
+      ...(output !== undefined ? { output } : {}),
       startedAt: started.toISOString(),
       durationMs: now().getTime() - started.getTime(),
       attempts,
@@ -165,7 +173,7 @@ export async function runStructured<TInput, TOutput>(
       // be able to hand unchecked output to the caller.
       const checked = task.schema.safeParse(response.output);
       if (checked.success) {
-        const cost = await record("ok");
+        const cost = await record("ok", undefined, checked.data);
         return { output: checked.data, runId, usage, costMicros: cost, attempts };
       }
       lastProblem = checked.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");

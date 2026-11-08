@@ -10,6 +10,11 @@ export type RunRecord = {
   model: string;
   /** Optional grouping for a per-scope cap: a customer, a job, an audit. */
   scope?: string;
+  /** The run that started this one, when tasks call tasks. */
+  parentRunId?: string;
+  /** What the task was given and what it returned, for the audit log. */
+  input?: unknown;
+  output?: unknown;
   startedAt: string;
   durationMs: number;
   attempts: number;
@@ -20,31 +25,38 @@ export type RunRecord = {
 };
 
 /**
+ * Which runs to add up. Both fields optional; together they mean AND.
+ * `since` is inclusive: a run that started exactly at `since` counts.
+ * `scope` matches exactly, and a query with a scope never counts unscoped runs.
+ */
+export type SpendQuery = { since?: Date; scope?: string };
+
+/**
  * Where runs are recorded and spend is read back from. The caps are only as
- * good as this: a ledger that loses rows lets spend through.
+ * good as this: a ledger that loses rows lets spend through. A database
+ * adapter answers `spent` with one SUM; ledgerContract (ledger.contract.ts)
+ * is the test every adapter must pass.
  */
 export interface SpendLedger {
-  /** Micro-USD spent since `since`, optionally within one scope. */
-  spentSince(since: Date, scope?: string): Promise<number>;
-  /** Micro-USD spent in a scope, all time. */
-  spentInScope(scope: string): Promise<number>;
+  /** Micro-USD spent by the runs matching the query. */
+  spent(query: SpendQuery): Promise<number>;
   record(run: RunRecord): Promise<void>;
 }
 
-function sum(runs: readonly RunRecord[]): number {
-  return runs.reduce((total, run) => total + run.costMicros, 0);
+/** The SpendQuery rule, for adapters that hold their runs in memory. */
+export function sumSpent(runs: readonly RunRecord[], query: SpendQuery): number {
+  const since = query.since?.getTime();
+  return runs
+    .filter((r) => (since === undefined || Date.parse(r.startedAt) >= since) && (query.scope === undefined || r.scope === query.scope))
+    .reduce((total, run) => total + run.costMicros, 0);
 }
 
 /** For tests and short-lived processes. */
 export class MemoryLedger implements SpendLedger {
   readonly runs: RunRecord[] = [];
 
-  async spentSince(since: Date, scope?: string): Promise<number> {
-    return sum(this.runs.filter((r) => Date.parse(r.startedAt) >= since.getTime() && (scope === undefined || r.scope === scope)));
-  }
-
-  async spentInScope(scope: string): Promise<number> {
-    return sum(this.runs.filter((r) => r.scope === scope));
+  async spent(query: SpendQuery): Promise<number> {
+    return sumSpent(this.runs, query);
   }
 
   async record(run: RunRecord): Promise<void> {
@@ -54,8 +66,8 @@ export class MemoryLedger implements SpendLedger {
 
 /**
  * Append-only JSON Lines file: one run per line, readable with `jq`. Enough for
- * a single process; a service with several writers wants a database table with
- * the same columns.
+ * a single process; it rereads the file on every check, and a service with
+ * several writers wants a database table with the same columns.
  */
 export class JsonlLedger implements SpendLedger {
   constructor(private readonly path: string) {}
@@ -74,12 +86,8 @@ export class JsonlLedger implements SpendLedger {
       .map((line) => JSON.parse(line) as RunRecord);
   }
 
-  async spentSince(since: Date, scope?: string): Promise<number> {
-    return sum((await this.runs()).filter((r) => Date.parse(r.startedAt) >= since.getTime() && (scope === undefined || r.scope === scope)));
-  }
-
-  async spentInScope(scope: string): Promise<number> {
-    return sum((await this.runs()).filter((r) => r.scope === scope));
+  async spent(query: SpendQuery): Promise<number> {
+    return sumSpent(await this.runs(), query);
   }
 
   async record(run: RunRecord): Promise<void> {
