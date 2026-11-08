@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import type { ClauseReport } from "../src/scan/map.js";
+import type { ScanReport } from "../src/scan/scanner.js";
 import { compare, loadExpected, serveShop, type Comparison } from "../test/testShop.js";
 
 /**
@@ -21,7 +21,7 @@ const OUT = new URL("../examples/RESULTS.md", import.meta.url);
 const W3C_BAD = "https://www.w3.org/WAI/demos/bad";
 const W3C_PAGES = ["home", "news", "tickets", "survey"];
 
-type Scan = ClauseReport & { caveat: string };
+type Scan = ScanReport;
 
 const shop = await serveShop();
 const transport = new StdioClientTransport({ command: "npx", args: ["tsx", "src/mcp/bin.ts"], stderr: "inherit" });

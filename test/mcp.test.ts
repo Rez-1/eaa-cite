@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { chromium, type Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createServer, type Scanner } from "../src/mcp/server.js";
-import { scanHtml } from "../src/scan/browser.js";
+import { createServer } from "../src/mcp/server.js";
+import { mapToClauses } from "../src/scan/map.js";
+import { createScanner, SCAN_CAVEAT, type Scanner, type ScanReport } from "../src/scan/scanner.js";
 import type { AxeRun } from "../src/scan/map.js";
 
 /**
@@ -22,6 +22,9 @@ const fakeRun: AxeRun = {
   incomplete: [],
   passes: [],
 };
+
+/** What a scanner returns. The server passes it through unchanged. */
+const fakeReport: ScanReport = { ...mapToClauses(fakeRun), caveat: SCAN_CAVEAT };
 
 async function connect(scanner: Scanner): Promise<Client> {
   const server = createServer({ scanner });
@@ -41,9 +44,9 @@ beforeAll(async () => {
   client = await connect({
     scanUrl: async (url) => {
       scanned.push(url);
-      return { ...fakeRun, url };
+      return { ...fakeReport, url };
     },
-    scanHtml: async () => fakeRun,
+    scanHtml: async () => fakeReport,
   });
 });
 
@@ -157,7 +160,7 @@ describe("explain_criterion", () => {
 });
 
 describe("scan_url", () => {
-  it("maps the scanner's result to EN clauses and attaches the caveat", async () => {
+  it("passes the scanner's report through, caveat included", async () => {
     const result = body(await client.callTool({ name: "scan_url", arguments: { url: "https://shop.test/" } }));
     expect(scanned).toContain("https://shop.test/");
     expect(result.failing[0]).toMatchObject({ enClause: "9.1.1.1", rules: [{ ruleId: "image-alt" }] });
@@ -170,7 +173,7 @@ describe("scan_url", () => {
       scanUrl: async () => {
         throw new Error("Only http and https URLs can be scanned");
       },
-      scanHtml: async () => fakeRun,
+      scanHtml: async () => fakeReport,
     });
     const result = await failing.callTool({ name: "scan_url", arguments: { url: "file:///etc/passwd" } });
     expect((result as TextResult).isError).toBe(true);
@@ -190,18 +193,14 @@ describe("resources", () => {
 });
 
 describe("scan_html with a real browser", () => {
-  let browser: Browser;
-  beforeAll(async () => {
-    browser = await chromium.launch();
-  });
-  afterAll(async () => {
-    await browser?.close();
-  });
+  const scanner = createScanner();
+  afterAll(() => scanner.close());
 
-  it("reports the planted defects end to end", async () => {
-    const real = await connect({ scanUrl: async () => fakeRun, scanHtml: (html) => scanHtml(html, { browser }) });
+  it("reports the planted defects end to end, with the caveat", async () => {
+    const real = await connect(scanner);
     const html = await readFile(new URL("./fixtures/shop-with-defects.html", import.meta.url), "utf8");
     const result = body(await real.callTool({ name: "scan_html", arguments: { html } }));
     expect(result.failing.map((c: any) => c.enClause)).toEqual(expect.arrayContaining(["9.1.1.1", "9.1.4.3", "9.3.1.1", "9.4.1.2"]));
+    expect(result.caveat).toBe(SCAN_CAVEAT);
   });
 });

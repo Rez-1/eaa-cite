@@ -26,7 +26,17 @@ export {
   type ClaimId,
   type Source,
 } from "./dataset/index.js";
-export { mapToClauses, type AxeRun, type ClauseReport } from "./scan/map.js";
-export { scanHtml, scanUrl, assertScannableUrl } from "./scan/browser.js";
+export { mapToClauses, type AxeRun, type ClauseReport } from "./scan/index.js";
+export {
+  createScanner,
+  assertScannableUrl,
+  SCAN_CAVEAT,
+  BlockedNavigationError,
+  UnsupportedUrlError,
+  type BrowserScanner,
+  type Scanner,
+  type ScannerOptions,
+  type ScanReport,
+} from "./scan/scanner.js";
 export { conformanceStatement, parseHarmonisationStatus, HARMONISATION_STATUSES, type HarmonisationStatus } from "./standards/harmonisation.js";
-export { createServer, type Scanner } from "./mcp/server.js";
+export { createServer } from "./mcp/server.js";

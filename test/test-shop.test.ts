@@ -1,30 +1,28 @@
-import { chromium, type Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { scanUrl } from "../src/scan/browser.js";
-import { mapToClauses } from "../src/scan/map.js";
+import { createScanner } from "../src/scan/scanner.js";
 import { compare, loadExpected, serveShop } from "./testShop.js";
 
 /**
  * The test shop in examples/test-shop, served over real HTTP and scanned with
- * scanUrl. Each page's planted defects are listed in expected.json; a scan must
+ * the scanner. Each page's planted defects are listed in expected.json; a scan must
  * find every one under the right EN clause, find nothing else, and never claim
  * a defect axe has no rule for.
  */
 
 const pages = await loadExpected();
 let shop: Awaited<ReturnType<typeof serveShop>>;
-let browser: Browser;
+const scanner = createScanner();
 
 beforeAll(async () => {
-  [shop, browser] = await Promise.all([serveShop(), chromium.launch()]);
+  shop = await serveShop();
 });
 afterAll(async () => {
-  await Promise.all([shop?.close(), browser?.close()]);
+  await Promise.all([shop?.close(), scanner.close()]);
 });
 
 describe.each(pages)("$path ($template)", (page) => {
   it("matches expected.json", async () => {
-    const result = compare(page, mapToClauses(await scanUrl(`${shop.origin}/${page.path}`, { browser })));
+    const result = compare(page, await scanner.scanUrl(`${shop.origin}/${page.path}`));
     expect(result.expectedRules.filter((r) => !r.found), "planted defects not found").toEqual([]);
     expect(result.unexpected, "failures nobody planted").toEqual([]);
     expect(result.needsReview.filter((r) => !r.found), "expected needs-review missing").toEqual([]);

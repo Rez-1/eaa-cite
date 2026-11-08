@@ -13,7 +13,7 @@ import {
   VersionMismatchError,
   type CitedJurisdiction,
 } from "../dataset/index.js";
-import { mapToClauses, type AxeRun, type ClauseReport } from "../scan/map.js";
+import type { Scanner } from "../scan/scanner.js";
 
 /**
  * The MCP server. No model runs inside it: every answer is a lookup in the
@@ -25,12 +25,7 @@ import { mapToClauses, type AxeRun, type ClauseReport } from "../scan/map.js";
  * without the quote next to it.
  */
 
-/** What the scan tools need. Injected so tests can run without a browser. */
-export type Scanner = {
-  scanUrl(url: string): Promise<AxeRun>;
-  scanHtml(html: string): Promise<AxeRun>;
-};
-
+/** The scanner is injected: createScanner() in production, a fake in tests. */
 export type ServerOptions = { scanner: Scanner; version?: string };
 
 const country = z
@@ -61,16 +56,6 @@ function obligations(file: CitedJurisdiction) {
     harmonisation: { status, basis, checkedAt, citations },
     unverified: file.unverified,
   };
-}
-
-/** What a scan result means and does not mean, sent with every scan. */
-const SCAN_CAVEAT =
-  "axe-core checks a subset of WCAG automatically. `failing` lists defects it found. " +
-  "`notCheckedByAxe` lists clause 9 criteria no axe rule touched: they need a person. " +
-  "There is deliberately no `passed` list, because an axe pass is not an evaluation of the criterion.";
-
-function scanResult(report: ClauseReport): CallToolResult {
-  return json({ ...report, caveat: SCAN_CAVEAT });
 }
 
 export function createServer(options: ServerOptions): McpServer {
@@ -170,7 +155,7 @@ export function createServer(options: ServerOptions): McpServer {
     },
     async ({ url }) => {
       try {
-        return scanResult(mapToClauses(await options.scanner.scanUrl(url)));
+        return json(await options.scanner.scanUrl(url));
       } catch (error) {
         return failure(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -188,7 +173,7 @@ export function createServer(options: ServerOptions): McpServer {
     },
     async ({ html }) => {
       try {
-        return scanResult(mapToClauses(await options.scanner.scanHtml(html)));
+        return json(await options.scanner.scanHtml(html));
       } catch (error) {
         return failure(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
       }
