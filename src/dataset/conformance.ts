@@ -11,7 +11,11 @@ import type { Jurisdiction } from "./schema.js";
 export const DEFAULT_EN_VERSION = "EN 301 549 v3.2.1";
 export const DEFAULT_WCAG_VERSION = "WCAG 2.1 AA";
 
-export type Conformance = {
+/** What was assessed. Both optional; the defaults are the versions EN 301 549 v3.2.1 clause 9 is built on. */
+export type Assessed = { enVersion?: string | undefined; wcagVersion?: string | undefined };
+
+/** The conformance answer for one jurisdiction (CONTEXT.md). */
+export type ConformanceAnswer = {
   status: HarmonisationStatus;
   /** Where the status comes from: the EU-level check, or the member state's own law. */
   basis: "eu" | "national-law";
@@ -48,32 +52,39 @@ export class VersionMismatchError extends Error {
  * that version is the one the sentence names; an assessment against any other
  * version is refused. Every other jurisdiction takes the EU answer.
  */
-export function resolveConformance(
-  file: CitedJurisdiction,
-  eu: CitedHarmonisation,
-  assessed: { enVersion?: string | undefined; wcagVersion?: string | undefined } = {},
-): Conformance {
+export function resolveConformance(file: CitedJurisdiction, eu: CitedHarmonisation, assessed: Assessed = {}): ConformanceAnswer {
   const named = file.jurisdiction === "EU" ? null : file.claims.presumptionOfConformity.value.namesEn301549Version;
 
-  if (named && assessed.enVersion && assessed.enVersion !== named) {
-    throw new VersionMismatchError(file.jurisdiction, named, assessed.enVersion);
+  // Where the answer comes from: the member state's own law if it names a
+  // version, otherwise the EU-level check.
+  let origin: Pick<ConformanceAnswer, "status" | "basis" | "enVersion" | "citations">;
+  if (named) {
+    if (assessed.enVersion && assessed.enVersion !== named) {
+      throw new VersionMismatchError(file.jurisdiction, named, assessed.enVersion);
+    }
+    origin = {
+      status: "national_only",
+      basis: "national-law",
+      enVersion: named,
+      citations: file.claims.presumptionOfConformity.citations.map((c) => ({ ...c, jurisdiction: file.jurisdiction })),
+    };
+  } else {
+    origin = {
+      status: eu.status,
+      basis: "eu",
+      enVersion: assessed.enVersion ?? DEFAULT_EN_VERSION,
+      citations: eu.citations.map((c) => ({ ...c, jurisdiction: "EU" as const })),
+    };
   }
 
-  const status: HarmonisationStatus = named ? "national_only" : eu.status;
-  const citations = named
-    ? file.claims.presumptionOfConformity.citations.map((c) => ({ ...c, jurisdiction: file.jurisdiction }))
-    : eu.citations.map((c) => ({ ...c, jurisdiction: "EU" as const }));
-  const enVersion = named ?? assessed.enVersion ?? DEFAULT_EN_VERSION;
   const wcagVersion = assessed.wcagVersion ?? DEFAULT_WCAG_VERSION;
-
+  // Every claim and the harmonisation block have at least one citation (schema), so
+  // there is always an oldest date. ISO dates sort as strings.
+  const [oldest] = origin.citations.map((c) => c.source.retrievedAt).sort();
   return {
-    status,
-    basis: named ? "national-law" : "eu",
-    enVersion,
+    ...origin,
     wcagVersion,
-    ...conformanceStatement({ status, enVersion, wcagVersion, memberState: file.jurisdiction }),
-    // ISO dates sort as strings.
-    checkedAt: citations.map((c) => c.source.retrievedAt).sort()[0]!,
-    citations,
+    ...conformanceStatement({ status: origin.status, enVersion: origin.enVersion, wcagVersion, memberState: file.jurisdiction }),
+    checkedAt: oldest!,
   };
 }

@@ -3,8 +3,9 @@
 Whether conformity with EN 301 549 gives a presumption of conformity under the
 European Accessibility Act is one of `cited`, `not_cited` or `national_only`
 (`src/standards/harmonisation.ts`). The answer is recorded once, in
-`data/jurisdictions/eu.json`, with its citations and the date it was checked; a
-load rule refuses a harmonisation block in any other file. A member state takes
+`data/jurisdictions/eu.json`, with its citations; a load rule refuses a
+harmonisation block in any other file, and the schema refuses `national_only`
+in the EU file. A member state takes
 that answer unless its own law names an EN 301 549 version, in which case it is
 `national_only` and cites its own law.
 

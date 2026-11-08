@@ -190,6 +190,10 @@ describe("resources", () => {
     const { contents } = await client.readResource({ uri: "eaa://jurisdictions/es" });
     expect(JSON.parse((contents[0] as { text: string }).text).jurisdiction).toBe("ES");
   });
+
+  it("answers an unknown jurisdiction with invalid params, naming the published ones", async () => {
+    await expect(client.readResource({ uri: "eaa://jurisdictions/gb" })).rejects.toThrow(/No data for "gb"\. Published: EU, SE, DE, ES/);
+  });
 });
 
 describe("scan_html with a real browser", () => {

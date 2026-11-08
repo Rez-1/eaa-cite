@@ -40,6 +40,13 @@ export type ScannerOptions = {
   isPrivateHost?: (hostname: string) => Promise<boolean>;
 };
 
+/** What the route handler decided about one main-frame navigation. */
+type Navigation =
+  | { kind: "loaded" }
+  | { kind: "redirect"; to: URL }
+  | { kind: "blocked"; url: string }
+  | { kind: "failed"; error: unknown };
+
 /** Most redirect chains are one or two hops; more than this is a loop or a trap. */
 const MAX_REDIRECTS = 10;
 
@@ -88,19 +95,22 @@ export function createScanner(options: ScannerOptions = {}): BrowserScanner {
   /** A connected browser. A failed launch is not remembered, so the next scan tries again. */
   async function connected(): Promise<Browser> {
     if (browser?.isConnected()) return browser;
-    launching ??= launch()
-      .then((b) => (browser = b))
-      .finally(() => (launching = null));
-    return launching;
+    if (launching) return launching; // another scan is already starting one
+    launching = launch();
+    try {
+      browser = await launching;
+      return browser;
+    } finally {
+      launching = null;
+    }
   }
 
-  /** Opens a fresh context, lets `load` put a document in the page, runs axe, maps it. */
-  async function scan(prepare: (context: BrowserContext) => Promise<unknown>, load: (page: Page) => Promise<string>): Promise<ScanReport> {
+  /** Opens a fresh context, lets `open` put a document in the page, runs axe, maps the result. */
+  async function scan(open: (context: BrowserContext, page: Page) => Promise<string>): Promise<ScanReport> {
     const context = await (await connected()).newContext();
     try {
-      await prepare(context);
       const page = await context.newPage();
-      const url = await load(page);
+      const url = await open(context, page);
       const run = await new AxeBuilder({ page }).withTags([...WCAG21_AA_TAGS]).analyze();
       return { ...mapToClauses({ ...run, url }), caveat: SCAN_CAVEAT };
     } finally {
@@ -113,64 +123,90 @@ export function createScanner(options: ScannerOptions = {}): BrowserScanner {
       const start = assertScannableUrl(raw);
       const startIsPrivate = await privateHost(start.hostname);
       const allowed = async (url: URL): Promise<boolean> => startIsPrivate || !(await privateHost(url.hostname));
-
-      let redirect: URL | null = null;
-      let blocked: string | null = null;
-
-      return scan(
-        // The redirect rule. Playwright does not route the hops of a redirect
-        // the browser follows itself, so each main-frame navigation is fetched
-        // here without following redirects. A redirect aborts the navigation
-        // and `load` navigates to the next hop as a new, routed request.
-        (context) =>
-          context.route("**/*", async (route) => {
-            const request = route.request();
-            if (!request.isNavigationRequest() || request.frame().parentFrame() !== null) return route.continue();
-            const url = new URL(request.url());
-            if (!(await allowed(url))) {
-              blocked = url.href;
-              return route.abort("blockedbyclient");
-            }
-            const response = await route.fetch({ maxRedirects: 0 });
-            const location = response.status() >= 300 && response.status() < 400 ? response.headers()["location"] : undefined;
-            if (location) {
-              redirect = new URL(location, url);
-              return route.abort("aborted");
-            }
-            return route.fulfill({ response });
-          }),
-        async (page) => {
-          let target = start;
-          for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-            redirect = null;
-            await page.goto(target.href, { waitUntil: "load", timeout }).catch((error: unknown) => {
-              if (!redirect && !blocked) throw error;
-            });
-            if (blocked) throw new BlockedNavigationError(blocked);
-            if (!redirect) return page.url();
-            target = assertScannableUrl((redirect as URL).href);
-          }
-          throw new Error(`Stopped after ${MAX_REDIRECTS} redirects from ${start.href}`);
-        },
-      );
+      return scan((context, page) => openWithRedirectRule(context, page, start, allowed, timeout));
     },
 
     async scanHtml(html) {
-      // Every request the markup makes is aborted, so pasted markup cannot call
-      // out. Script stays enabled because axe itself runs as page script.
-      return scan(
-        (context) => context.route("**/*", (route) => route.abort()),
-        async (page) => {
-          await page.setContent(html, { waitUntil: "load", timeout });
-          return "about:blank (inline HTML)";
-        },
-      );
+      return scan(async (context, page) => {
+        // Every request the markup makes is aborted, so pasted markup cannot
+        // call out. Script stays enabled because axe itself runs as page script.
+        await context.route("**/*", (route) => route.abort());
+        await page.setContent(html, { waitUntil: "load", timeout });
+        return "about:blank (inline HTML)";
+      });
     },
 
     async close() {
+      await launching?.catch(() => {}); // let a launch in progress finish, so its browser is closed too
       const open = browser;
       browser = null;
       await open?.close();
     },
   };
+}
+
+/**
+ * Loads `start` in the page, following redirects hop by hop and refusing any
+ * main-frame navigation `allowed` rejects. Returns the final URL.
+ *
+ * Playwright does not route the hops of a redirect the browser follows
+ * itself. So the route handler fetches each main-frame navigation without
+ * following redirects and records what happened; on a redirect it aborts, and
+ * the loop below navigates to the next hop as a new, routed request.
+ */
+async function openWithRedirectRule(
+  context: BrowserContext,
+  page: Page,
+  start: URL,
+  allowed: (url: URL) => Promise<boolean>,
+  timeout: number,
+): Promise<string> {
+  // Set by the route handler during page.goto; read through outcome() so
+  // TypeScript does not narrow it to the value assigned before the await.
+  let navigation: Navigation = { kind: "loaded" };
+  const outcome = (): Navigation => navigation;
+
+  await context.route("**/*", async (route) => {
+    const request = route.request();
+    if (!request.isNavigationRequest() || request.frame().parentFrame() !== null) return route.continue();
+    const url = new URL(request.url());
+    try {
+      if (!(await allowed(url))) {
+        navigation = { kind: "blocked", url: url.href };
+        return await route.abort("blockedbyclient");
+      }
+      const response = await route.fetch({ maxRedirects: 0 });
+      const location = response.status() >= 300 && response.status() < 400 ? response.headers()["location"] : undefined;
+      if (location) {
+        navigation = { kind: "redirect", to: new URL(location, url) };
+        return await route.abort("aborted");
+      }
+      return await route.fulfill({ response });
+    } catch (error) {
+      // A refused connection, DNS failure or timeout. It must fail this scan,
+      // not escape the handler and take the process down.
+      navigation = { kind: "failed", error };
+      await route.abort("failed").catch(() => {});
+    }
+  });
+
+  let target = start;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    navigation = { kind: "loaded" };
+    await page.goto(target.href, { waitUntil: "load", timeout }).catch((error: unknown) => {
+      if (outcome().kind === "loaded") throw error;
+    });
+    const result = outcome();
+    switch (result.kind) {
+      case "loaded":
+        return page.url();
+      case "blocked":
+        throw new BlockedNavigationError(result.url);
+      case "failed":
+        throw result.error;
+      case "redirect":
+        target = assertScannableUrl(result.to.href);
+    }
+  }
+  throw new Error(`Stopped after ${MAX_REDIRECTS} redirects from ${start.href}`);
 }

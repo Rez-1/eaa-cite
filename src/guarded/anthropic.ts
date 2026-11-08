@@ -1,10 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { ModelClient } from "./run.js";
 
 /**
  * ModelClient for the Anthropic Messages API. The SDK is an optional peer
- * dependency: nothing else in this package needs it.
+ * dependency: its helper is imported on the first call, so importing
+ * eaa-cite/guarded with another ModelClient never loads it.
  *
  * The system prompt carries a cache breakpoint, so repeated calls to one task
  * pay the cache-read rate for it. stop_reason is checked before the parsed
@@ -14,6 +14,7 @@ import type { ModelClient } from "./run.js";
 export function anthropicClient(sdk: Anthropic): ModelClient {
   return {
     async complete({ model, system, messages, schema, maxTokens }) {
+      const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
       const message = await sdk.messages.parse({
         model,
         max_tokens: maxTokens,

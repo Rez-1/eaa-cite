@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { citationsOf, getJurisdiction, PUBLISHED, type CitedJurisdiction, type ResolvedCitation, type Source } from "../src/dataset/index.js";
+import { citationsOf, getJurisdiction, PUBLISHED, type CitationEntry, type Source } from "../src/dataset/index.js";
 import { findQuote, readableText } from "../src/dataset/quotes.js";
 
 /**
@@ -30,7 +30,7 @@ type Result = {
 /** Decodes with the charset the server declares; gesetze-im-internet.de is ISO-8859-1. */
 async function fetchText(url: string): Promise<{ text: string; sha256: string }> {
   const response = await fetch(url, {
-    headers: { "user-agent": "eaa-cite verify-sources (+https://github.com/)", accept: "text/html,*/*" },
+    headers: { "user-agent": "eaa-cite verify-sources (+https://github.com/Rez-1/eaa-cite)", accept: "text/html,*/*" },
     redirect: "follow",
     signal: AbortSignal.timeout(30_000),
   });
@@ -45,14 +45,15 @@ async function fetchText(url: string): Promise<{ text: string; sha256: string }>
   };
 }
 
-async function verifySource(file: CitedJurisdiction, source: Source, cited: { claim: string; citation: ResolvedCitation }[]): Promise<Result> {
-  const base = { jurisdiction: file.jurisdiction, source: source.id, url: source.url };
+/** Fetches one source and looks for every quote that cites it. */
+async function verifySource(jurisdiction: string, source: Source, citing: readonly CitationEntry[]): Promise<Result> {
+  const base = { jurisdiction, source: source.id, url: source.url };
   if (source.verify === "manual") return { ...base, status: "manual" };
   try {
     const { text, sha256 } = await fetchText(source.url);
-    const missing = cited.flatMap(({ claim, citation }) => {
+    const missing = citing.flatMap(({ place, citation }) => {
       const check = findQuote(text, citation.quote);
-      return check.found ? [] : [{ claim, pinpoint: citation.pinpoint, segment: check.missing }];
+      return check.found ? [] : [{ claim: place, pinpoint: citation.pinpoint, segment: check.missing }];
     });
     return { ...base, status: missing.length ? "quote-missing" : "ok", sha256, ...(missing.length ? { missing } : {}) };
   } catch (error) {
@@ -63,9 +64,11 @@ async function verifySource(file: CitedJurisdiction, source: Source, cited: { cl
 async function main(): Promise<void> {
   const json = process.argv.includes("--json");
   const jobs = PUBLISHED.flatMap((code) => {
-    const file = getJurisdiction(code);
-    const citations = citationsOf(code);
-    return file.sources.map((source) => () => verifySource(file, source, citations.filter((e) => e.citation.source.id === source.id).map((e) => ({ claim: e.place, citation: e.citation }))));
+    const entries = citationsOf(code);
+    return getJurisdiction(code).sources.map((source) => {
+      const citing = entries.filter((e) => e.citation.source.id === source.id);
+      return () => verifySource(code, source, citing);
+    });
   });
 
   // One request at a time per run: these are public-service sites.

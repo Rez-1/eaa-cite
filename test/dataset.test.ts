@@ -78,6 +78,21 @@ describe("loading", () => {
     expect(problemsLoading(se, "SE")).toContain("jurisdiction: declares DK, but the file is for SE");
   });
 
+  it("rejects a misspelt claim id instead of dropping it", () => {
+    const se = copyOf("SE");
+    se.claims.penalty = se.claims.penalties;
+    delete se.claims.penalties;
+    const problems = problemsLoading(se, "SE");
+    expect(problems.some((p) => p.startsWith("claims.penalties:"))).toBe(true); // the required claim is missing
+    expect(problems.some((p) => p.startsWith("claims:") && p.includes("penalty"))).toBe(true); // and the stray key is named
+  });
+
+  it("rejects an unknown field on a citation", () => {
+    const de = copyOf("DE");
+    de.claims.penalties.citations[0].pinpiont = "§ 37";
+    expect(problemsLoading(de, "DE").some((p) => p.includes("pinpiont"))).toBe(true);
+  });
+
   it("reports schema problems with their path", () => {
     const de = copyOf("DE");
     de.claims.penalties.citations = [];

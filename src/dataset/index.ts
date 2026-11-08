@@ -1,5 +1,5 @@
 import { readData } from "../dataPath.js";
-import { resolveConformance, type Conformance } from "./conformance.js";
+import { resolveConformance, type Assessed, type ConformanceAnswer } from "./conformance.js";
 import { parseJurisdictionFile, walkCitations, type CitationEntry, type CitedClaims, type CitedHarmonisation, type CitedJurisdiction, type LoadedJurisdiction } from "./load.js";
 import { claimsSchema, type ClaimId, type Jurisdiction } from "./schema.js";
 
@@ -19,16 +19,18 @@ export type Published = (typeof PUBLISHED)[number];
 /** Every claim id the schema defines, as a schema, so tool inputs can validate against it. */
 export const claimIdSchema = claimsSchema.keyof();
 
-const raw = new Map<Published, unknown>();
-const loaded = new Map<Published, LoadedJurisdiction>();
-for (const code of PUBLISHED) {
-  const json = readData(`jurisdictions/${code.toLowerCase()}.json`);
-  raw.set(code, json);
-  loaded.set(code, parseJurisdictionFile(json, code));
-}
+/** One shipped file: as checked in, and as loaded. Loading throws if any file breaks a rule. */
+type Shipped = LoadedJurisdiction & { raw: unknown };
 
-/** The EU file's harmonisation block. The load rules guarantee it exists. */
-export const euHarmonisation: CitedHarmonisation = loaded.get("EU")!.harmonisation!;
+const shipped = Object.fromEntries(
+  PUBLISHED.map((code) => {
+    const raw = readData(`jurisdictions/${code.toLowerCase()}.json`);
+    return [code, { raw, ...parseJurisdictionFile(raw, code) }];
+  }),
+) as Record<Published, Shipped>;
+
+/** The EU file's harmonisation block. A load rule refuses an EU file without one. */
+export const euHarmonisation: CitedHarmonisation = shipped.EU.harmonisation!;
 
 export function isPublished(code: string): code is Published {
   return (PUBLISHED as readonly string[]).includes(code);
@@ -41,25 +43,26 @@ export class UnknownJurisdictionError extends Error {
   }
 }
 
-function published(code: string): Published {
+/** A shipped file by code in any case, or UnknownJurisdictionError. */
+function shippedFile(code: string): Shipped {
   const upper = code.trim().toUpperCase();
   if (!isPublished(upper)) throw new UnknownJurisdictionError(code);
-  return upper;
+  return shipped[upper];
 }
 
 /** One jurisdiction, by code in any case. */
 export function getJurisdiction(code: string): CitedJurisdiction {
-  return loaded.get(published(code))!.cited;
+  return shippedFile(code).cited;
 }
 
 /** The file exactly as checked in. For showing the source data, not for reading values. */
 export function rawJurisdictionFile(code: string): unknown {
-  return raw.get(published(code));
+  return shippedFile(code).raw;
 }
 
 /** Every citation in a jurisdiction: its claims, and for the EU the harmonisation block. */
 export function citationsOf(code: string): CitationEntry[] {
-  const { cited, harmonisation } = loaded.get(published(code))!;
+  const { cited, harmonisation } = shippedFile(code);
   return walkCitations({ claims: cited.claims, ...(harmonisation ? { harmonisation } : {}) });
 }
 
@@ -69,8 +72,11 @@ export function compareClaim<K extends ClaimId>(claim: K) {
     const entry: CitedClaims[K] = getJurisdiction(code).claims[claim];
     return entry ? [{ jurisdiction: code, ...(entry as NonNullable<CitedClaims[K]>) }] : [];
   });
-  return { claim, rows, absent: PUBLISHED.filter((code) => !getJurisdiction(code).claims[claim]) };
+  return { claim, rows, absent: PUBLISHED.filter((code) => !rows.some((row) => row.jurisdiction === code)) };
 }
+
+/** What compare_jurisdictions returns. */
+export type ClaimComparison = ReturnType<typeof compareClaim<ClaimId>>;
 
 /**
  * What a report may say about the standard in one jurisdiction: status, the
@@ -79,7 +85,7 @@ export function compareClaim<K extends ClaimId>(claim: K) {
  */
 export function conformanceFor(
   code: string,
-  assessed: { enVersion?: string | undefined; wcagVersion?: string | undefined } = {},
-): Conformance {
+  assessed: Assessed = {},
+): ConformanceAnswer {
   return resolveConformance(getJurisdiction(code), euHarmonisation, assessed);
 }

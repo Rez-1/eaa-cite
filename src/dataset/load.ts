@@ -85,7 +85,10 @@ type RawEntry = CitationEntry<Citation>;
  * The structural rules. Each returns the problems it found; an empty list
  * means the rule holds. Adding a rule is adding an entry here.
  */
-const RULES: readonly ((file: JurisdictionFile, citations: readonly RawEntry[], expected?: Jurisdiction) => string[])[] = [
+/** A structural rule: the problems it finds in one file, or none. */
+type Rule = (file: JurisdictionFile, citations: readonly RawEntry[], expected?: Jurisdiction) => string[];
+
+const RULES: readonly Rule[] = [
   // data/jurisdictions/se.json must be Sweden's file, not a copy of another.
   function fileIsForItsJurisdiction(file, _citations, expected) {
     return expected && file.jurisdiction !== expected
@@ -155,11 +158,11 @@ export function parseJurisdictionFile(json: unknown, expected?: Jurisdiction): L
   const problems = RULES.flatMap((rule) => rule(file, citations, expected));
   if (problems.length > 0) throw new DatasetIntegrityError(label, problems);
 
+  // citationsNameListedSources has passed, so every lookup below finds its source.
   const sources = new Map(file.sources.map((s) => [s.id, s]));
   const resolve = (citation: Citation): ResolvedCitation => ({ ...citation, source: sources.get(citation.source)! });
 
-  // TypeScript cannot follow a per-key rewrite through Object.entries, hence
-  // the cast; the rules above guarantee every source lookup succeeds.
+  // TypeScript cannot follow a per-key rewrite through Object.entries, hence the cast.
   const claims = Object.fromEntries(
     Object.entries(file.claims).map(([id, claim]) => [id, claim && { ...claim, citations: claim.citations.map(resolve) }]),
   ) as CitedClaims;

@@ -1,5 +1,5 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode, McpError, type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { criteria, criteriaFile, findCriterion } from "../criteria/index.js";
 import {
@@ -13,7 +13,7 @@ import {
   VersionMismatchError,
   type CitedJurisdiction,
 } from "../dataset/index.js";
-import type { Scanner } from "../scan/scanner.js";
+import type { Scanner, ScanReport } from "../scan/scanner.js";
 
 /**
  * The MCP server. No model runs inside it: every answer is a lookup in the
@@ -41,12 +41,37 @@ function failure(message: string): CallToolResult {
   return { isError: true, content: [{ type: "text", text: message }] };
 }
 
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/** Errors a caller can act on. Anything else is a bug and propagates to the SDK. */
+const isCallerError = (error: unknown): error is Error =>
+  error instanceof UnknownJurisdictionError || error instanceof VersionMismatchError;
+
+/** A lookup tool's result: the answer as JSON, or a caller error as a tool error. */
+async function lookup(answer: () => unknown): Promise<CallToolResult> {
+  try {
+    return json(answer());
+  } catch (error) {
+    if (isCallerError(error)) return failure(error.message);
+    throw error;
+  }
+}
+
+/** A scan tool's result. Any scan failure (bad URL, blocked redirect, unreachable page) is a tool error. */
+async function scanned(scan: () => Promise<ScanReport>): Promise<CallToolResult> {
+  try {
+    return json(await scan());
+  } catch (error) {
+    return failure(`Scan failed: ${messageOf(error)}`);
+  }
+}
+
 /**
  * get_obligations carries the same harmonisation fields as conformance_statement,
  * minus the sentence. A version named in law is already in the claims, under
  * presumptionOfConformity.
  */
-function obligations(file: CitedJurisdiction) {
+export function obligations(file: CitedJurisdiction) {
   const { status, basis, checkedAt, citations } = conformanceFor(file.jurisdiction);
   return {
     jurisdiction: file.jurisdiction,
@@ -57,6 +82,16 @@ function obligations(file: CitedJurisdiction) {
     unverified: file.unverified,
   };
 }
+
+/** What get_obligations returns. */
+export type Obligations = ReturnType<typeof obligations>;
+
+/** What explain_criterion returns. */
+export function explainCriterion(ref: string) {
+  const criterion = findCriterion(ref);
+  return criterion && { ...criterion, enVersion: criteriaFile.enVersion, enSource: criteriaFile.sources.en };
+}
+export type CriterionExplanation = NonNullable<ReturnType<typeof explainCriterion>>;
 
 export function createServer(options: ServerOptions): McpServer {
   const server = new McpServer({ name: "eaa-cite", version: options.version ?? "0.1.0" });
@@ -73,24 +108,17 @@ export function createServer(options: ServerOptions): McpServer {
       inputSchema: { country },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    async ({ country: code }) => {
-      try {
-        return json(obligations(getJurisdiction(code)));
-      } catch (error) {
-        if (error instanceof UnknownJurisdictionError) return failure(error.message);
-        throw error;
-      }
-    },
+    async ({ country: code }) => lookup(() => obligations(getJurisdiction(code))),
   );
 
   server.registerTool(
     "compare_jurisdictions",
     {
-      title: "Compare one EAA rule across jurisdictions",
+      title: "Compare one EAA claim across jurisdictions",
       description:
         "One claim, such as penalties or the self-service terminal transition, side by side for every published " +
         "jurisdiction, each with its citations. Jurisdictions whose data has no value for the claim are listed under `absent`.",
-      inputSchema: { claim: claimIdSchema.describe("Which rule to compare.") },
+      inputSchema: { claim: claimIdSchema.describe("Which claim to compare.") },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ claim }) => json(compareClaim(claim)),
@@ -111,14 +139,7 @@ export function createServer(options: ServerOptions): McpServer {
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    async ({ country: code, enVersion, wcagVersion }) => {
-      try {
-        return json(conformanceFor(code, { enVersion, wcagVersion }));
-      } catch (error) {
-        if (error instanceof UnknownJurisdictionError || error instanceof VersionMismatchError) return failure(error.message);
-        throw error;
-      }
-    },
+    async ({ country: code, enVersion, wcagVersion }) => lookup(() => conformanceFor(code, { enVersion, wcagVersion })),
   );
 
   server.registerTool(
@@ -132,14 +153,12 @@ export function createServer(options: ServerOptions): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ ref }) => {
-      const criterion = findCriterion(ref);
-      if (!criterion) {
-        return failure(
-          `${JSON.stringify(ref)} is not a clause 9 criterion of ${criteriaFile.enVersion}. ` +
-            "It covers WCAG 2.1 levels A and AA only; AAA criteria and WCAG 2.2 additions are outside it.",
-        );
-      }
-      return json({ ...criterion, enVersion: criteriaFile.enVersion, enSource: criteriaFile.sources.en });
+      const explanation = explainCriterion(ref);
+      if (explanation) return json(explanation);
+      return failure(
+        `${JSON.stringify(ref)} is not a clause 9 criterion of ${criteriaFile.enVersion}. ` +
+          "It covers WCAG 2.1 levels A and AA only; AAA criteria and WCAG 2.2 additions are outside it.",
+      );
     },
   );
 
@@ -153,13 +172,7 @@ export function createServer(options: ServerOptions): McpServer {
       inputSchema: { url: z.string().describe("An http or https URL. localhost is allowed.") },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    async ({ url }) => {
-      try {
-        return json(await options.scanner.scanUrl(url));
-      } catch (error) {
-        return failure(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    },
+    async ({ url }) => scanned(() => options.scanner.scanUrl(url)),
   );
 
   server.registerTool(
@@ -171,30 +184,31 @@ export function createServer(options: ServerOptions): McpServer {
       inputSchema: { html: z.string().min(1).max(2_000_000).describe("A full HTML document or a fragment.") },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    async ({ html }) => {
-      try {
-        return json(await options.scanner.scanHtml(html));
-      } catch (error) {
-        return failure(`Scan failed: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    },
+    async ({ html }) => scanned(() => options.scanner.scanHtml(html)),
   );
 
   server.registerResource(
     "jurisdiction",
     new ResourceTemplate("eaa://jurisdictions/{code}", {
       list: async () => ({
-        resources: PUBLISHED.map((code) => ({
-          uri: `eaa://jurisdictions/${code.toLowerCase()}`,
-          name: `${getJurisdiction(code).name}: ${getJurisdiction(code).instrument}`,
-          mimeType: "application/json",
-        })),
+        resources: PUBLISHED.map((code) => {
+          const file = getJurisdiction(code);
+          return { uri: `eaa://jurisdictions/${code.toLowerCase()}`, name: `${file.name}: ${file.instrument}`, mimeType: "application/json" };
+        }),
       }),
     }),
     { title: "Jurisdiction data file", description: "The raw data file for one jurisdiction, as checked in.", mimeType: "application/json" },
-    async (uri, { code }) => ({
-      contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(rawJurisdictionFile(String(code)), null, 2) }],
-    }),
+    async (uri, { code }) => {
+      let file: unknown;
+      try {
+        file = rawJurisdictionFile(String(code));
+      } catch (error) {
+        // Resources have no tool-style error result; an unknown code is invalid params, not a server fault.
+        if (isCallerError(error)) throw new McpError(ErrorCode.InvalidParams, error.message);
+        throw error;
+      }
+      return { contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(file, null, 2) }] };
+    },
   );
 
   server.registerResource(

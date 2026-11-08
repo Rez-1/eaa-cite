@@ -56,6 +56,16 @@ describe("the browser lifecycle", () => {
     }
   });
 
+  it("closes a browser that was still launching when close() was called", async () => {
+    let launched: import("playwright").Browser | null = null;
+    const s = createScanner({ launch: async () => (launched = await chromium.launch()) });
+    const scanning = s.scanHtml("<p>x</p>").catch(() => {});
+    await s.close();
+    await scanning;
+    await s.close();
+    expect(launched!.isConnected()).toBe(false);
+  });
+
   it("launches again after the browser goes away", async () => {
     let launches = 0;
     const s = createScanner({ launch: () => (launches++, chromium.launch()) });
@@ -107,6 +117,18 @@ describe("the redirect rule", () => {
     expect(report.url).toBe(`http://127.0.0.1:${port}/final`);
   });
 
+  it("fails the scan, not the process, when the server refuses the connection", async () => {
+    const closed = createServer();
+    await new Promise<void>((resolve) => closed.listen(0, "127.0.0.1", resolve));
+    const closedPort = (closed.address() as { port: number }).port;
+    await new Promise<void>((resolve) => closed.close(() => resolve()));
+
+    await expect(scanner.scanUrl(`http://127.0.0.1:${closedPort}/`)).rejects.toThrow(/ECONNREFUSED/);
+    await expect(publicLoopback.scanUrl(`http://127.0.0.1:${closedPort}/`)).rejects.toThrow(/ECONNREFUSED/);
+    // The scanner still works afterwards.
+    await expect(scanner.scanUrl(`http://127.0.0.1:${port}/final`)).resolves.toHaveProperty("caveat");
+  });
+
   it("stops a redirect loop", async () => {
     await expect(publicLoopback.scanUrl(`http://127.0.0.1:${port}/loop`)).rejects.toThrow(/Stopped after 10 redirects/);
   });
@@ -126,19 +148,29 @@ describe("assertScannableUrl", () => {
 });
 
 describe("private addresses", () => {
-  it("knows the private IPv4 and IPv6 ranges", () => {
-    for (const ip of ["127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.1", "169.254.169.254", "::1", "fd12::1", "fe80::1", "::ffff:10.0.0.1"]) {
+  it("knows the private IPv4 ranges", () => {
+    for (const ip of ["0.0.0.0", "10.1.2.3", "100.64.0.1", "100.127.255.255", "127.0.0.1", "169.254.169.254", "172.16.0.1", "172.31.255.255", "192.168.1.1"]) {
       expect(isPrivateAddress(ip), ip).toBe(true);
     }
-    for (const ip of ["8.8.8.8", "172.32.0.1", "192.169.0.1", "2001:4860::8888", "::ffff:8.8.8.8"]) {
+    for (const ip of ["8.8.8.8", "100.128.0.1", "172.32.0.1", "192.169.0.1", "203.0.113.7"]) {
       expect(isPrivateAddress(ip), ip).toBe(false);
     }
   });
 
-  it("treats localhost names and private literals as private without a lookup", async () => {
-    expect(await isPrivateHost("localhost")).toBe(true);
-    expect(await isPrivateHost("shop.localhost")).toBe(true);
-    expect(await isPrivateHost("[::1]")).toBe(true);
-    expect(await isPrivateHost("203.0.113.7")).toBe(false);
+  it("knows the private IPv6 ranges, including IPv4 written inside IPv6", () => {
+    for (const ip of ["::", "::1", "fd12::1", "fe80::1", "::ffff:10.0.0.1", "::ffff:a00:1", "::ffff:7f00:1", "0:0:0:0:0:ffff:7f00:1", "::7f00:1", "64:ff9b::a00:1"]) {
+      expect(isPrivateAddress(ip), ip).toBe(true);
+    }
+    for (const ip of ["2001:4860::8888", "::ffff:8.8.8.8", "::ffff:808:808", "64:ff9b::808:808"]) {
+      expect(isPrivateAddress(ip), ip).toBe(false);
+    }
+  });
+
+  it("checks hostnames exactly as URL.hostname writes them", async () => {
+    // Each of these reaches this machine or a private network in Chromium.
+    for (const url of ["http://localhost/", "http://shop.localhost/", "http://[::1]/", "http://[::ffff:127.0.0.1]/", "http://[::]/", "http://0.0.0.0/", "http://0x7f.1/", "http://2130706433/", "http://[::ffff:10.0.0.1]/"]) {
+      expect(await isPrivateHost(new URL(url).hostname), url).toBe(true);
+    }
+    expect(await isPrivateHost(new URL("http://203.0.113.7/").hostname)).toBe(false);
   });
 });

@@ -1,6 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { connectStdio } from "./lib/mcpClient.js";
 import type { ScanReport } from "../src/scan/scanner.js";
 import { compare, loadExpected, serveShop, type Comparison } from "../test/testShop.js";
 
@@ -21,18 +20,8 @@ const OUT = new URL("../examples/RESULTS.md", import.meta.url);
 const W3C_BAD = "https://www.w3.org/WAI/demos/bad";
 const W3C_PAGES = ["home", "news", "tickets", "survey"];
 
-type Scan = ScanReport;
-
 const shop = await serveShop();
-const transport = new StdioClientTransport({ command: "npx", args: ["tsx", "src/mcp/bin.ts"], stderr: "inherit" });
-const client = new Client({ name: "eaa-cite-try", version: "0" });
-await client.connect(transport);
-
-async function call<T>(name: string, args: Record<string, unknown>): Promise<T> {
-  const result = (await client.callTool({ name, arguments: args })) as { isError?: boolean; content: { text: string }[] };
-  if (result.isError) throw new Error(`${name}: ${result.content[0]?.text}`);
-  return JSON.parse(result.content[0]!.text) as T;
-}
+const client = await connectStdio("eaa-cite-try");
 
 const lines: string[] = [];
 const out = (line = ""): void => {
@@ -41,9 +30,9 @@ const out = (line = ""): void => {
 
 // ---- Test shop -------------------------------------------------------------
 
-const comparisons: { c: Comparison; scan: Scan }[] = [];
+const comparisons: { c: Comparison; scan: ScanReport }[] = [];
 for (const page of await loadExpected()) {
-  const scan = await call<Scan>("scan_url", { url: `${shop.origin}/${page.path}` });
+  const scan = await client.call("scan_url", { url: `${shop.origin}/${page.path}` });
   comparisons.push({ c: compare(page, scan), scan });
 }
 
@@ -114,12 +103,12 @@ if (withW3c) {
   const details: string[] = [];
   for (const name of W3C_PAGES) {
     const [before, after] = [
-      await call<Scan>("scan_url", { url: `${W3C_BAD}/before/${name}.html` }),
-      await call<Scan>("scan_url", { url: `${W3C_BAD}/after/${name}.html` }),
+      await client.call("scan_url", { url: `${W3C_BAD}/before/${name}.html` }),
+      await client.call("scan_url", { url: `${W3C_BAD}/after/${name}.html` }),
     ];
-    const instances = (s: Scan): number => s.failing.reduce((n, c) => n + c.rules.reduce((m, r) => m + r.instances, 0), 0);
+    const instances = (s: ScanReport): number => s.failing.reduce((n, c) => n + c.rules.reduce((m, r) => m + r.instances, 0), 0);
     out(`| ${name} | ${before.summary.failing} | ${after.summary.failing} | ${instances(before)} | ${instances(after)} |`);
-    const list = (s: Scan): string =>
+    const list = (s: ScanReport): string =>
       s.failing.map((c) => `${c.enClause} ${c.name} (\`${c.rules.map((r) => r.ruleId).join("`, `")}\`)`).join("; ") || "none";
     details.push(`- **${name}**, before: ${list(before)}`, `- **${name}**, after: ${list(after)}`);
   }
@@ -134,8 +123,7 @@ out("## What the law says about it");
 out();
 out("The same server answers the legal questions. From `compare_jurisdictions { claim: \"penalties\" }`:");
 out();
-type Row = { jurisdiction: string; value: { maxFine: number | null; currency: string | null }; citations: { pinpoint: string; source: { url: string } }[] };
-const penalties = await call<{ rows: Row[] }>("compare_jurisdictions", { claim: "penalties" });
+const penalties = await client.compare("penalties");
 out("| Jurisdiction | Highest fine stated | Where |");
 out("|---|---|---|");
 for (const row of penalties.rows) {
@@ -144,7 +132,7 @@ for (const row of penalties.rows) {
   out(`| ${row.jurisdiction} | ${amount} | [${last.pinpoint}](${last.source.url}) |`);
 }
 out();
-const statement = await call<{ sentence: string; mayClaimPresumptionOfConformity: boolean }>("conformance_statement", { country: "DE" });
+const statement = await client.call("conformance_statement", { country: "DE" });
 out("And from `conformance_statement { country: \"DE\" }`, the sentence a report on any of these pages could print:");
 out();
 out(`> ${statement.sentence}`);

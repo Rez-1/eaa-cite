@@ -12,8 +12,9 @@ import type { RunRecord, SpendLedger } from "./ledger.js";
  */
 export type LedgerContractCase = { name: string; run: (makeLedger: () => SpendLedger | Promise<SpendLedger>) => Promise<void> };
 
+// Ids are unique across cases, as a database adapter's primary key requires.
 let n = 0;
-const run = (startedAt: string, costMicros: number, scope?: string): RunRecord => ({
+const row = (startedAt: string, costMicros: number, scope?: string): RunRecord => ({
   id: `contract-${++n}`,
   task: "contract",
   model: "test",
@@ -39,7 +40,7 @@ export const ledgerContract: readonly LedgerContractCase[] = [
     name: "a recorded run is counted straight away",
     async run(make) {
       const ledger = await make();
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 250));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 250));
       assert.equal(await ledger.spent({}), 250);
     },
   },
@@ -47,9 +48,9 @@ export const ledgerContract: readonly LedgerContractCase[] = [
     name: "since is inclusive",
     async run(make) {
       const ledger = await make();
-      await ledger.record(run("2026-11-07T23:59:59.999Z", 1));
-      await ledger.record(run("2026-11-08T00:00:00.000Z", 10));
-      await ledger.record(run("2026-11-08T12:00:00.000Z", 100));
+      await ledger.record(row("2026-11-07T23:59:59.999Z", 1));
+      await ledger.record(row("2026-11-08T00:00:00.000Z", 10));
+      await ledger.record(row("2026-11-08T12:00:00.000Z", 100));
       assert.equal(await ledger.spent({ since: new Date("2026-11-08T00:00:00.000Z") }), 110);
     },
   },
@@ -57,9 +58,9 @@ export const ledgerContract: readonly LedgerContractCase[] = [
     name: "scope matches exactly and never counts unscoped runs",
     async run(make) {
       const ledger = await make();
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 1, "audit-1"));
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 10, "audit-10"));
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 100));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 1, "audit-1"));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 10, "audit-10"));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 100));
       assert.equal(await ledger.spent({ scope: "audit-1" }), 1);
       assert.equal(await ledger.spent({}), 111);
     },
@@ -68,9 +69,9 @@ export const ledgerContract: readonly LedgerContractCase[] = [
     name: "scope and since together mean both",
     async run(make) {
       const ledger = await make();
-      await ledger.record(run("2026-11-01T10:00:00.000Z", 1, "audit-1"));
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 10, "audit-1"));
-      await ledger.record(run("2026-11-08T10:00:00.000Z", 100, "audit-2"));
+      await ledger.record(row("2026-11-01T10:00:00.000Z", 1, "audit-1"));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 10, "audit-1"));
+      await ledger.record(row("2026-11-08T10:00:00.000Z", 100, "audit-2"));
       assert.equal(await ledger.spent({ since: new Date("2026-11-08T00:00:00.000Z"), scope: "audit-1" }), 10);
     },
   },

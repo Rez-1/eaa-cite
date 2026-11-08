@@ -135,7 +135,7 @@ describe("runStructured", () => {
 
   it("records the input, output and parent run when asked", async () => {
     const g = guard(scripted({ kind: "parsed", output: { severity: "minor" }, usage: usage(1, 1) }));
-    await runStructured(g, task, "Button has no name", { record: { input: "Button has no name", parentRunId: "run-0" } });
+    await runStructured(g, task, "Button has no name", { audit: { input: "Button has no name", parentRunId: "run-0" } });
     expect(g.ledger.runs[0]).toMatchObject({ input: "Button has no name", output: { severity: "minor" }, parentRunId: "run-0" });
   });
 

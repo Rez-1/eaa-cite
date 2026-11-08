@@ -110,8 +110,8 @@ export async function runStructured<TInput, TOutput>(
   options: {
     /** Groups runs for the per-scope cap. */
     scope?: string;
-    /** Extra fields for the ledger row, for an audit log. */
-    record?: { input?: unknown; parentRunId?: string };
+    /** Extra fields stored on the ledger row, for an audit log. */
+    audit?: { input?: unknown; parentRunId?: string };
   } = {},
 ): Promise<Result<TOutput>> {
   const now = guard.now ?? (() => new Date());
@@ -131,8 +131,9 @@ export async function runStructured<TInput, TOutput>(
       task: task.name,
       model: task.model,
       ...(options.scope !== undefined ? { scope: options.scope } : {}),
-      ...(options.record?.parentRunId !== undefined ? { parentRunId: options.record.parentRunId } : {}),
-      ...(options.record && "input" in options.record ? { input: options.record.input } : {}),
+      // Conditional spreads, because exactOptionalPropertyTypes forbids writing undefined.
+      ...(options.audit?.parentRunId !== undefined ? { parentRunId: options.audit.parentRunId } : {}),
+      ...(options.audit?.input !== undefined ? { input: options.audit.input } : {}),
       ...(output !== undefined ? { output } : {}),
       startedAt: started.toISOString(),
       durationMs: now().getTime() - started.getTime(),
