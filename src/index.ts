@@ -27,5 +27,5 @@ export {
   type Source,
 } from "./dataset/index.js";
 // The pure clause 9 mapping only. The scanner, which loads Playwright, is the
-// `eaa-cite/scan` entry, so importing the dataset never loads a browser library.
+// `eaa-cite/scan/browser` entry, so importing the dataset never loads a browser library.
 export { mapToClauses, type AxeRun, type ClauseReport } from "./scan/map.js";

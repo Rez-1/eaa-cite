@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * What each package entry pulls in, read from the import statements. The root
  * entry is for the dataset, so it must not reach the browser or the MCP SDK;
- * those load only through `eaa-cite/scan` and the two bins.
+ * those load only through `eaa-cite/scan/browser` and the two bins.
  */
 function packagesReachedFrom(entry: string): Set<string> {
   const packages = new Set<string>();
@@ -26,11 +26,11 @@ function packagesReachedFrom(entry: string): Set<string> {
 const HEAVY = /^(playwright|@axe-core\/playwright|axe-core|@modelcontextprotocol\/|@anthropic-ai\/)/;
 
 describe("package entries", () => {
-  it("keeps the browser, the MCP SDK and the model SDK out of the root entry", () => {
-    expect([...packagesReachedFrom("src/index.ts")].filter((p) => HEAVY.test(p))).toEqual([]);
+  it.each(["src/index.ts", "src/scan/index.ts", "src/criteria/index.ts"])("keeps the browser and the SDKs out of %s", (entry) => {
+    expect([...packagesReachedFrom(entry)].filter((p) => HEAVY.test(p))).toEqual([]);
   });
 
-  it("finds Playwright through eaa-cite/scan, so the check above can fail", () => {
-    expect([...packagesReachedFrom("src/scan/index.ts")]).toContain("playwright");
+  it("finds Playwright through eaa-cite/scan/browser, so the check above can fail", () => {
+    expect([...packagesReachedFrom("src/scan/browser.ts")]).toContain("playwright");
   });
 });
