@@ -85,7 +85,9 @@ The checks then run on GitHub for you:
 - `ci` loads every file and runs the tests. A broken file shows the problem list
   described in the next section.
 - `verify-sources` runs because the pull request touches `data/`. It fetches
-  every source and checks every quote is still there, including yours.
+  every source and checks every quote is still there, including yours. Sources
+  on www.gesetze-im-internet.de are skipped there, because the site drops
+  connections from GitHub; the maintainer checks a German change locally.
 
 If this is your first pull request to the repository, the maintainer may need to
 approve the checks before they run. If a check fails, open it ("Details") to read

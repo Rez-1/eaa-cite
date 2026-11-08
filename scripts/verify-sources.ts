@@ -7,9 +7,11 @@ import { findQuote, readableText } from "../src/dataset/quotes.js";
  *
  *   npm run verify-sources            # human-readable report
  *   npm run verify-sources -- --json  # machine-readable, for the scheduled CI job
+ *   npm run verify-sources -- --skip-host www.example.de   # leave one host out (repeatable)
  *
  * A missing quote means the law was amended, the page moved, or the quote was
- * wrong to begin with. Any of the three needs a person, so the script exits 1
+ * wrong to begin with. A citation can also list `absent` phrases; one turning
+ * up means a claim of absence, such as "not cited", may no longer hold. Any of the three needs a person, so the script exits 1
  * and says which claim is affected. It never edits the data.
  *
  * It also flags any source retrieved more than a year ago as stale: statutes
@@ -36,11 +38,13 @@ type Result = {
   jurisdiction: string;
   source: string;
   url: string;
-  status: "ok" | "quote-missing" | "fetch-failed" | "manual";
+  status: "ok" | "quote-missing" | "phrase-found" | "fetch-failed" | "manual" | "skipped";
   /** Retrieved more than MAX_AGE_DAYS ago: re-read the provision and update retrievedAt. */
   stale?: true;
   sha256?: string;
   missing?: { claim: string; pinpoint: string; segment: string }[];
+  /** `absent` phrases that are now on the page. */
+  found?: { claim: string; pinpoint: string; phrase: string }[];
   error?: string;
 };
 
@@ -58,7 +62,6 @@ async function fetchText(url: string): Promise<{ text: string; sha256: string }>
   };
 }
 
-/** Fetches one source and looks for every quote that cites it. */
 /** Follows redirects by hand, refusing any hop off the official hosts. */
 async function fetchOfficial(start: string): Promise<Response> {
   let url = start;
@@ -105,28 +108,41 @@ function isStale(source: Source, now = Date.now()): boolean {
   return (now - Date.parse(source.retrievedAt)) / 86_400_000 > MAX_AGE_DAYS;
 }
 
-async function verifySource(jurisdiction: string, source: Source, citing: readonly CitationEntry[]): Promise<Result> {
+/** Fetches one source and looks for every quote that cites it, and for every phrase that must be absent. */
+async function verifySource(
+  jurisdiction: string,
+  source: Source,
+  citing: readonly CitationEntry[],
+  skippedHosts: ReadonlySet<string>,
+): Promise<Result> {
   const base = { jurisdiction, source: source.id, url: source.url, ...(isStale(source) ? { stale: true as const } : {}) };
   if (source.verify === "manual") return { ...base, status: "manual" };
+  if (skippedHosts.has(new URL(source.url).hostname)) return { ...base, status: "skipped" };
   try {
     const { text, sha256 } = await fetchText(source.url);
     const missing = citing.flatMap(({ place, citation }) => {
       const check = findQuote(text, citation.quote);
       return check.found ? [] : [{ claim: place, pinpoint: citation.pinpoint, segment: check.missing }];
     });
-    return { ...base, status: missing.length ? "quote-missing" : "ok", sha256, ...(missing.length ? { missing } : {}) };
+    const found = citing.flatMap(({ place, citation }) =>
+      (citation.absent ?? []).filter((phrase) => findQuote(text, phrase).found).map((phrase) => ({ claim: place, pinpoint: citation.pinpoint, phrase })),
+    );
+    const status = missing.length ? "quote-missing" : found.length ? "phrase-found" : "ok";
+    return { ...base, status, sha256, ...(missing.length ? { missing } : {}), ...(found.length ? { found } : {}) };
   } catch (error) {
     return { ...base, status: "fetch-failed", error: reasonOf(error) };
   }
 }
 
 async function main(): Promise<void> {
-  const json = process.argv.includes("--json");
+  const args = process.argv.slice(2);
+  const json = args.includes("--json");
+  const skippedHosts = new Set(args.flatMap((arg, i) => (arg === "--skip-host" && args[i + 1] ? [args[i + 1]!] : [])));
   const jobs = PUBLISHED.flatMap((code) => {
     const entries = citationsOf(code);
     return getJurisdiction(code).sources.map((source) => {
       const citing = entries.filter((e) => e.citation.source.id === source.id);
-      return () => verifySource(code, source, citing);
+      return () => verifySource(code, source, citing, skippedHosts);
     });
   });
 
@@ -138,17 +154,20 @@ async function main(): Promise<void> {
     console.log(JSON.stringify({ checkedAt: new Date().toISOString(), results }, null, 2));
   } else {
     for (const r of results) {
-      const mark = { ok: "ok     ", "quote-missing": "MISSING", "fetch-failed": "FAILED ", manual: "manual " }[r.status];
+      const mark = { ok: "ok     ", "quote-missing": "MISSING", "phrase-found": "FOUND  ", "fetch-failed": "FAILED ", manual: "manual ", skipped: "skipped" }[r.status];
       console.log(`${mark} ${r.jurisdiction} ${r.source}${r.stale ? "  STALE" : ""}${r.error ? `  ${r.error}` : ""}`);
       for (const m of r.missing ?? []) console.log(`          ${m.claim} (${m.pinpoint}): not found: "${m.segment}"`);
+      for (const f of r.found ?? []) console.log(`          ${f.claim} (${f.pinpoint}): must be absent, now on the page: "${f.phrase}"`);
     }
     const manual = results.filter((r) => r.status === "manual");
     if (manual.length) console.log(`\n${manual.length} source(s) need a person to re-check: ${manual.map((r) => r.url).join(", ")}`);
+    const skipped = results.filter((r) => r.status === "skipped");
+    if (skipped.length) console.log(`\n${skipped.length} source(s) skipped with --skip-host; check them from another network.`);
     const stale = results.filter((r) => r.stale);
     if (stale.length) console.log(`\n${stale.length} source(s) were retrieved more than ${MAX_AGE_DAYS} days ago: re-read the provision and update retrievedAt.`);
   }
 
-  if (results.some((r) => r.status === "quote-missing" || r.status === "fetch-failed" || r.stale)) process.exit(1);
+  if (results.some((r) => r.status === "quote-missing" || r.status === "phrase-found" || r.status === "fetch-failed" || r.stale)) process.exit(1);
 }
 
 main().catch((error: unknown) => {

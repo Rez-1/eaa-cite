@@ -161,6 +161,7 @@ A citation says where a claim's value comes from.
 | `pinpoint` | yes | The place in the source the quote comes from. |
 | `quote` | yes | Verbatim text from the source, in its language. |
 | `translation` | when the source is not in English | An English translation of the quote. |
+| `absent` | no | Phrases that must not be on the page. For a claim of absence, such as "no standard is cited": a quote stays true when something is added, so `verify-sources` fails if one of these appears. |
 | `note` | no | Anything a reader needs to know about this citation. |
 
 When a file loads, each citation's `source` id is replaced by the whole source
@@ -456,6 +457,9 @@ It is recorded once, in `eu.json`, as a top-level `harmonisation` block:
   law and is worked out from its file, so the schema refuses it here.
 - `citations`: at least one, in the same shape as a claim's. The block has no
   date of its own: the answer is dated by its oldest citation's `retrievedAt`.
+  The Commission page citation lists `absent` phrases ("2019/882", "European
+  Accessibility Act", "products and services"), so the source check fails the
+  day an EAA entry appears there.
 
 A member state's file must not have a `harmonisation` block. The member state
 takes the EU answer, unless its own `presumptionOfConformity` claim names an EN
@@ -555,9 +559,16 @@ Then the structural rules, with the exact problem each reports:
 | Every citation names a listed source. | `claims.penalties.citations[0]: names source "bfsg-99", which is not listed` |
 | Every source is cited at least once. | `sources: "orphan" is never cited` |
 | Every quote from a non-English source has a translation. | `claims.applicationDate.citations[0]: quote is in sv and has no translation` |
+| Fines are in the jurisdiction's currency: SEK for Sweden, EUR for the EU and the euro area. | `claims.penalties.value.currency: is SEK, but DE fines are in EUR` |
+| Every number and ISO date in a claim's value appears in the English text of one of its citations: the translation, or the quote for an English source. Numbers are read as digits ("10,000"), millions ("2 million") and words up to twenty; dates as "28 June 2025". | `claims.penalties.value: 50000 is not in any of its citations` |
 
 Citations in the EU harmonisation block are checked too; their paths start with
 `harmonisation.citations[…]`.
+
+The figures rule checks that a number is stated, not that it is stated for that
+field. A small number can match by chance: Germany's penalty translation says
+"paragraph 1", so a fine of 1 would pass it. Review still compares each value
+with its quote.
 
 These rules do not depend on the date or on judgement, so they can run every
 time the package loads. Quote length is judgement and is a test, below. Source

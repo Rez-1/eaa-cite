@@ -130,6 +130,35 @@ describe("loading", () => {
     );
   });
 
+  it("rejects a fine in another country's currency", () => {
+    const de = copyOf("DE");
+    de.claims.penalties.value.currency = "SEK";
+    expect(problemsLoading(de, "DE")).toContain("claims.penalties.value.currency: is SEK, but DE fines are in EUR");
+  });
+
+  it("rejects a number its citations do not state", () => {
+    const de = copyOf("DE");
+    de.claims.penalties.value.maxFine = 50_000;
+    expect(problemsLoading(de, "DE")).toEqual(["claims.penalties.value: 50000 is not in any of its citations"]);
+  });
+
+  it("rejects a date its citations do not state", () => {
+    const se = copyOf("SE");
+    se.claims.applicationDate.value.date = "2025-06-29";
+    expect(problemsLoading(se, "SE")).toEqual(["claims.applicationDate.value: 2025-06-29 is not in any of its citations"]);
+  });
+
+  it("finds numbers written as words and in millions", () => {
+    // DE states 15 years as "fifteen" and EUR 2 million in words; both load (see the first test).
+    const de = copyOf("DE");
+    de.claims.transitionalSelfServiceTerminals.value.maxYearsAfterFirstUse = 16;
+    de.claims.microenterpriseDefinition.value.maxAnnualTurnoverEur = 3_000_000;
+    expect(problemsLoading(de, "DE")).toEqual([
+      "claims.microenterpriseDefinition.value: 3000000 is not in any of its citations",
+      "claims.transitionalSelfServiceTerminals.value: 16 is not in any of its citations",
+    ]);
+  });
+
   it("keeps harmonisation off what callers read", () => {
     for (const code of PUBLISHED) expect(getJurisdiction(code), code).not.toHaveProperty("harmonisation");
   });

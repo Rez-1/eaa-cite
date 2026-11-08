@@ -73,6 +73,24 @@ Data retrieved 2026-11-08.
 - Documentation in `docs/`, plus `CONTRIBUTING.md`, `SECURITY.md`,
   `CODE_OF_CONDUCT.md` and this changelog.
 
+### Changed
+
+- The scanner moved to its own entry, `eaa-cite/scan`. The package root no
+  longer loads Playwright; it still exports `mapToClauses`.
+- The scheduled source check runs monthly instead of weekly.
+- CI skips www.gesetze-im-internet.de, which drops connections from GitHub's
+  runners; those sources are checked from another network.
+
+### Added after review
+
+- Load rules: fines must be in the jurisdiction's currency, and every number and
+  date in a value must appear in its citations.
+- An `absent` field on citations: phrases that fail `verify-sources` if they
+  appear. The EU harmonisation citation uses it, so an EAA standard citation on
+  the Commission's page is noticed.
+- Spain's fine-band quotes now include each band's maximum, which the new load
+  rule found missing.
+
 ### Fixed
 
 Found by five independent reviews of the public repository:

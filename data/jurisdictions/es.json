@@ -192,20 +192,20 @@
         {
           "source": "rdl-1-2013",
           "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra a)",
-          "quote": "Las infracciones leves, en su grado mínimo, con multas de 301 a 6.000 euros; en su grado medio, de 6.001 a 18.000 euros",
-          "translation": "Minor infringements: in the minimum degree, fines of EUR 301 to 6,000; in the medium degree, EUR 6,001 to 18,000."
+          "quote": "Las infracciones leves, en su grado mínimo, con multas de 301 a 6.000 euros; … y en su grado máximo, de 18.001 a 30.000 euros.",
+          "translation": "Minor infringements: in the minimum degree, fines of EUR 301 to 6,000; … and in the maximum degree, EUR 18,001 to 30,000."
         },
         {
           "source": "rdl-1-2013",
           "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra b)",
-          "quote": "Las infracciones graves con multas, en su grado mínimo, de 30.001 a 60.000 euros; en su grado medio, de 60.001 a 78.000 euros",
-          "translation": "Serious infringements: in the minimum degree, fines of EUR 30,001 to 60,000; in the medium degree, EUR 60,001 to 78,000."
+          "quote": "Las infracciones graves con multas, en su grado mínimo, de 30.001 a 60.000 euros; … y en su grado máximo, de 78.001 a 90.000 euros.",
+          "translation": "Serious infringements: in the minimum degree, fines of EUR 30,001 to 60,000; … and in the maximum degree, EUR 78,001 to 90,000."
         },
         {
           "source": "rdl-1-2013",
           "pinpoint": "Real Decreto Legislativo 1/2013, artículo 96, letra c)",
-          "quote": "Las infracciones muy graves con multas, en su grado mínimo, de 90.001 a 300.000 euros; en su grado medio, de 300.001 a 600.000 euros",
-          "translation": "Very serious infringements: in the minimum degree, fines of EUR 90,001 to 300,000; in the medium degree, EUR 300,001 to 600,000."
+          "quote": "Las infracciones muy graves con multas, en su grado mínimo, de 90.001 a 300.000 euros; … y en su grado máximo, de 600.001 a 1.000.000 de euros.",
+          "translation": "Very serious infringements: in the minimum degree, fines of EUR 90,001 to 300,000; … and in the maximum degree, EUR 600,001 to 1,000,000."
         }
       ]
     },

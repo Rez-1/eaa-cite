@@ -1,3 +1,4 @@
+import { datesInText, figuresInValue, numbersInText } from "./figures.js";
 import { isOfficialSourceUrl } from "./officialHosts.js";
 import {
   jurisdictionFileSchema,
@@ -142,7 +143,44 @@ const RULES: readonly Rule[] = [
       .filter((e) => (language.get(e.citation.source) ?? "en") !== "en" && !e.citation.translation)
       .map((e) => `${e.path}: quote is in ${language.get(e.citation.source)} and has no translation`);
   },
+
+  // A fine in the wrong currency is wrong by its whole amount.
+  function penaltiesAreInTheNationalCurrency(file) {
+    const currency = file.claims.penalties.value.currency;
+    const expected = NATIONAL_CURRENCY[file.jurisdiction];
+    return currency !== null && expected && currency !== expected
+      ? [`claims.penalties.value.currency: is ${currency}, but ${file.jurisdiction} fines are in ${expected}`]
+      : [];
+  },
+
+  // A value must say what its quote says: every number and date in it has to
+  // appear in the English text of one of its citations (src/dataset/figures.ts).
+  function figuresComeFromTheirQuotes(file, citations) {
+    const english = new Set(file.sources.filter((s) => s.language === "en").map((s) => s.id));
+    return Object.entries(file.claims).flatMap(([id, claim]) => {
+      if (!claim) return [];
+      const text = citations
+        .filter((e) => e.place === id)
+        .map((e) => e.citation.translation ?? (english.has(e.citation.source) ? e.citation.quote : ""))
+        .join("\n");
+      const numbers = numbersInText(text);
+      const dates = datesInText(text);
+      const { numbers: stated, dates: statedDates } = figuresInValue(claim.value);
+      return [
+        ...stated.filter((n) => !numbers.has(n)).map((n) => `claims.${id}.value: ${n} is not in any of its citations`),
+        ...statedDates.filter((d) => !dates.has(d)).map((d) => `claims.${id}.value: ${d} is not in any of its citations`),
+      ];
+    });
+  },
 ];
+
+/** The currency fines are stated in. Only currencies the schema allows are listed. */
+const NATIONAL_CURRENCY: Partial<Record<Jurisdiction, "EUR" | "SEK">> = {
+  SE: "SEK",
+  ...Object.fromEntries(
+    ["EU", "AT", "BE", "BG", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"].map((j) => [j, "EUR"]),
+  ),
+};
 
 /**
  * Parses and checks one file. `expected` is the jurisdiction the file is

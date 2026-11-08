@@ -153,6 +153,11 @@
         "source": "commission-harmonised-standards",
         "pinpoint": "References of harmonised standards and of other European standards published in the OJEU, group 'Accessibility'",
         "quote": "Websites and mobile applications of public sector bodies",
+        "absent": [
+          "2019/882",
+          "European Accessibility Act",
+          "products and services"
+        ],
         "note": "The only entry under Accessibility. There is no entry for Directive (EU) 2019/882 or for products and services."
       },
       {

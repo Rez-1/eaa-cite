@@ -32,8 +32,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # www.gesetze-im-internet.de drops connections from GitHub's runners (no
+      # answer on 443 or 80; other hosts answer). Its sources are checked from
+      # outside GitHub instead: see docs/verification.md.
       - name: Check every quote against its source
-        run: npm run --silent verify-sources -- --json > verification.json
+        run: npm run --silent verify-sources -- --json --skip-host www.gesetze-im-internet.de > verification.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -50,8 +53,8 @@ jobs:
             echo
             echo "| Jurisdiction | Source | Status | Detail |"
             echo "|---|---|---|---|"
-            jq -r '.results[] | select(.status == "quote-missing" or .status == "fetch-failed" or .stale == true)
-              | "| \(.jurisdiction) | \(.source) | \(.status)\(if .stale then ", stale" else "" end) | \(.error // ([.missing[]? | "\(.claim) (\(.pinpoint))"] | join("; ")) | if . == "" then "retrieved over a year ago" else . end) |"' verification.json
+            jq -r '.results[] | select(.status == "quote-missing" or .status == "phrase-found" or .status == "fetch-failed" or .stale == true)
+              | "| \(.jurisdiction) | \(.source) | \(.status)\(if .stale then ", stale" else "" end) | \(.error // ([(.missing[]? | "\(.claim) (\(.pinpoint))"), (.found[]? | "\(.claim): now on the page: \(.phrase)")] | join("; ")) | if . == "" then "retrieved over a year ago" else . end) |"' verification.json
             echo
             echo "See docs/verification.md for what to do."
           } > body.md

@@ -95,6 +95,9 @@ For machine-readable output, as the CI job uses:
 npm run --silent verify-sources -- --json > verification.json
 ```
 
+To leave out a host that cannot be reached from where you run it, pass
+`--skip-host <host>`, once per host. Its sources are reported as `skipped`.
+
 ```json
 {
   "checkedAt": "2026-11-08T17:10:00.517Z",
@@ -130,8 +133,10 @@ and 0 otherwise. `manual` sources do not make it fail.
 |---|---|---|---|
 | `ok` | `ok` | The page was fetched and every quote citing it was found. | no |
 | `quote-missing` | `MISSING` | The page was fetched, and at least one quote was not found. | yes |
+| `phrase-found` | `FOUND` | The page was fetched, and a phrase a citation lists as `absent` is now on it. A claim of absence, such as "not cited", may no longer hold. | yes |
 | `fetch-failed` | `FAILED` | The page could not be fetched: a network error, a timeout, or an HTTP error status. Nothing was checked. | yes |
 | `manual` | `manual` | The source is marked `verify: "manual"`. It was not fetched; a person must check it. | no |
+| `skipped` | `skipped` | Its host was passed to `--skip-host`. It was not fetched. | no |
 
 `ok` means the words are still on the page. It does not mean the value is still
 right; see [What verification does not prove](#what-verification-does-not-prove).
@@ -145,6 +150,13 @@ Ubuntu with Node 22:
   quote is checked live even when the contributor cannot run Node;
 - on the 1st of each month at 06:17 UTC;
 - on demand, from the Actions tab ("Run workflow").
+
+The job passes `--skip-host www.gesetze-im-internet.de`. That site drops
+connections from GitHub's runners: a diagnostic run on 2026-11-08 resolved the
+same address as elsewhere (195.74.94.216) but got no answer on port 443 or 80,
+with any user agent, while the other official hosts answered. So the six German
+sources there show as `skipped` in CI and are checked by running
+`npm run verify-sources` from another network, on the same monthly cadence.
 
 Each run saves `verification.json` as a build artifact named `verification`,
 whether the check passed or failed. Download it from the run's summary page. It is
@@ -250,8 +262,9 @@ reviewed pull request. See
 
 ## What verification does not prove
 
-- That the value is right. The script checks that the quote is on the page, not
-  that the claim's value reads it correctly. Review does that.
+- That the value is right. The script checks that the quote is on the page. The
+  load rules check that each number and date in a value appears in its
+  citations, but not that it is the right one; review does that.
 - That the quote still supports the value. A provision can keep its words while
   another provision changes what they mean: a new exception, a definition
   rewritten elsewhere, a later law that takes precedence.

@@ -53,6 +53,12 @@ export const citationSchema = z.strictObject({
   quote: z.string().min(1),
   /** Required when the source is not in English; checked in the tests. */
   translation: z.string().min(1).optional(),
+  /**
+   * Phrases that must not be on the page. For a claim of absence, such as "no
+   * standard is cited": the quote stays true when something is added, so
+   * verify-sources also fails if one of these appears.
+   */
+  absent: z.array(z.string().min(1)).min(1).optional(),
   note: z.string().min(1).optional(),
 });
 export type Citation = z.infer<typeof citationSchema>;
