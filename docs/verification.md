@@ -136,14 +136,14 @@ and 0 otherwise. `manual` sources do not make it fail.
 `ok` means the words are still on the page. It does not mean the value is still
 right; see [What verification does not prove](#what-verification-does-not-prove).
 
-## The weekly job
+## The monthly job
 
 `.github/workflows/verify-sources.yml` runs the script on GitHub Actions, on
 Ubuntu with Node 22:
 
 - on every pull request that changes a file under `data/`, so a new or changed
   quote is checked live even when the contributor cannot run Node;
-- every Monday at 06:17 UTC;
+- on the 1st of each month at 06:17 UTC;
 - on demand, from the Actions tab ("Run workflow").
 
 Each run saves `verification.json` as a build artifact named `verification`,
@@ -160,9 +160,15 @@ is notified of the issue in the usual way.
 A failed pull-request run does not open an issue. It shows as a failed check on
 the pull request.
 
-The owner aims to fix a weekly failure within two weeks.
+The owner aims to fix a scheduled failure within two weeks.
 
-## When the weekly job fails
+Why monthly: the cited texts change a few times a year across all sources, and
+most amendments are published weeks before they apply. A monthly run fits the
+two-week fix target, makes fewer requests to public sites, and opens fewer
+issues for a site that was briefly down. Run `npm run verify-sources` yourself
+when you need the answer for a given day.
+
+## When the monthly job fails
 
 Start from the `verify-sources` issue. It names each failing source and, for a
 missing quote, the claim and pinpoint affected. Download the `verification`
@@ -197,7 +203,7 @@ reports and stops instead of guessing.
 ### A fetch failed
 
 1. Run `npm run verify-sources` again. Public sites have short outages, and a
-   second run often passes. If the failure was on the weekly run, you can also
+   second run often passes. If the failure was on the monthly run, you can also
    re-run the workflow from the Actions tab.
 2. If it fails again, open the URL in a browser.
    - If the site is down for everyone, wait and try again later. Comment on the
@@ -218,7 +224,7 @@ reports and stops instead of guessing.
 Manual sources appear in every run's output and in the JSON with status
 `manual`. They do not fail the run, so nothing reminds you except that list and
 the age rule: once a source's `retrievedAt` is more than 365 days old, the run
-marks it `STALE` and fails, and the weekly job opens an issue.
+marks it `STALE` and fails, and the monthly job opens an issue.
 
 To re-check one:
 

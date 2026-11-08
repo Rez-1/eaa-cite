@@ -67,8 +67,8 @@ Data retrieved 2026-11-08.
   `CONTEXT.md` as the glossary.
 - CI on every push to `main` and every pull request: typecheck, tests, build and
   `npm run demo`.
-- A `verify-sources` workflow that runs weekly and on every pull request that
-  touches `data/`. When the weekly run fails, it opens an issue labelled
+- A `verify-sources` workflow that runs monthly and on every pull request that
+  touches `data/`. When the monthly run fails, it opens an issue labelled
   `verify-sources`, or comments on the open one.
 - Documentation in `docs/`, plus `CONTRIBUTING.md`, `SECURITY.md`,
   `CODE_OF_CONDUCT.md` and this changelog.

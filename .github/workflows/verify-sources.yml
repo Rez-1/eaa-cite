@@ -5,7 +5,7 @@ name: verify-sources
 # On a pull request that touches data/, this is the live check of a new or
 # changed quote, so contributors without Node still get one.
 #
-# On the weekly schedule, a failure means a law was amended or a page moved. The
+# On the monthly schedule, a failure means a law was amended or a page moved. The
 # job then opens an issue (or comments on the open one) naming the affected
 # claims; a person updates the data by hand.
 
@@ -14,7 +14,7 @@ on:
     paths:
       - "data/**"
   schedule:
-    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+    - cron: "17 6 1 * *" # the 1st of each month, 06:17 UTC
   workflow_dispatch:
 
 permissions:
@@ -46,7 +46,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           {
-            echo "The weekly source check failed on $(date -u +%Y-%m-%d). Run: $RUN_URL"
+            echo "The monthly source check failed on $(date -u +%Y-%m-%d). Run: $RUN_URL"
             echo
             echo "| Jurisdiction | Source | Status | Detail |"
             echo "|---|---|---|---|"
@@ -55,7 +55,7 @@ jobs:
             echo
             echo "See docs/verification.md for what to do."
           } > body.md
-          gh label create verify-sources --color D73A49 --description "Weekly source check failed" 2>/dev/null || true
+          gh label create verify-sources --color D73A49 --description "Monthly source check failed" 2>/dev/null || true
           existing=$(gh issue list --label verify-sources --state open --json number --jq '.[0].number')
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body-file body.md

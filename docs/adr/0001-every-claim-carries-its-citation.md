@@ -43,7 +43,7 @@ likely to be paraphrased wrongly or carried over from a neighbouring country.
 cites it, piece by piece around any ellipsis. A missing quote means the text was
 amended, the page moved, or the quote was wrong when it was written. All three
 need a person, so the script exits non-zero and never edits the data. CI runs it
-weekly.
+monthly.
 
 Page hashes are printed but not compared. Consolidated statute pages change their
 markup often, and a hash mismatch on a page whose quotes are all still present

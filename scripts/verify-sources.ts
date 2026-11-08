@@ -15,7 +15,7 @@ import { findQuote, readableText } from "../src/dataset/quotes.js";
  * It also flags any source retrieved more than a year ago as stale: statutes
  * get amended, so a quote that is still on the page still needs a person to
  * re-read the provision and update `retrievedAt`. That check lives here, in the
- * weekly job, and not in the unit tests, so a clone does not start failing its
+ * monthly job, and not in the unit tests, so a clone does not start failing its
  * tests a year after the data was checked.
  *
  * The SHA-256 of each page is printed for the record, not compared: consolidated

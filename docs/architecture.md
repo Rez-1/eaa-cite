@@ -13,7 +13,7 @@ copied from a neighbouring country.
 
 So every value is a claim, and a claim cannot exist without a citation: a source,
 a pinpoint, a verbatim quote and an English translation. A file that breaks this
-does not load, and a weekly job checks every quote against its live source.
+does not load, and a monthly job checks every quote against its live source.
 [ADR 0001](adr/0001-every-claim-carries-its-citation.md) has the full argument.
 
 ## Layout of the repo

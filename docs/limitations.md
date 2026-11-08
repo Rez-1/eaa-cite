@@ -66,14 +66,14 @@ without reading the source language. Cite the original text, not the translation
   this release were retrieved on 2026-11-08.
 - A conformance answer has a `checkedAt` date: the oldest `retrievedAt` among the
   sources it cites. The answer is only as fresh as that.
-- A weekly job re-reads every source and fails if a quote is gone. It does not
+- A monthly job re-reads every source and fails if a quote is gone. It does not
   catch a law changed in a place no quote covers. See
   [docs/verification.md](verification.md).
-- The weekly job also flags any source retrieved more than 365 days ago, so
+- The monthly job also flags any source retrieved more than 365 days ago, so
   stale data opens an issue even if every quote is still there.
 
-A law can change on any day. Between two runs of the weekly job, the data can be
-up to a week behind the source, and a change outside the quoted passages can go
+A law can change on any day. Between two runs of the monthly job, the data can be
+up to a month behind the source, and a change outside the quoted passages can go
 unnoticed for longer.
 
 ## What a scan can and cannot tell you
