@@ -91,4 +91,4 @@ was made with `npm run try -- --w3c` on 2026-11-08: every page matched
 checked by axe, each W3C "before" page failed four or five clause 9 criteria,
 and each "after" page failed none.
 
-How to read the results: [docs/results.md](../docs/results.md).
+How to read the results: [docs/results.md](../docs/usage.md#scan).

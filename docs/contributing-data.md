@@ -1,294 +1,162 @@
 # Contributing data
 
-This page is for people who know the law or accessibility and want to correct or
-add to the dataset. You do not need to write code. The "Report" and "Correct"
-paths below need only a GitHub account and a web browser.
+For people who know the law or accessibility and want to correct or add to the
+dataset. Reporting and correcting a value need only a GitHub account and a
+browser. The file format is in [data-format.md](data-format.md); terms such as
+claim, citation and pinpoint are in [CONTEXT.md](../CONTEXT.md).
 
-The format of the files is described in [data-format.md](data-format.md). Terms
-such as claim, citation and pinpoint are defined in [CONTEXT.md](../CONTEXT.md).
+Every change must meet three rules:
 
-## Before you start
-
-Three things every change has to meet:
-
-- Official sources only. A source is an official document: the law on an
-  official legislation site, an official gazette, a European Commission page, or
-  a supervisory authority's own site. The permitted hosts are listed in
-  `src/dataset/officialHosts.ts`. Blogs, law firm notes, news articles and secondary
-  databases are not sources, even when they are right. Use them to find the law,
-  then cite the law.
-- Quotes are verbatim. Copy the exact words from the source, in its language,
-  with any omission marked `…`. At most 30 words. Every quote from a non-English
-  source needs an English translation.
-- Every change is reviewed against the source. The reviewer opens your URL, finds
-  your pinpoint and reads your quote there. If it is not there, the change is not
-  merged.
-
-The data is under CC BY 4.0 (see [Credit and licence](#credit-and-licence)).
+- Official sources only: the law on an official legislation site, an official
+  gazette, a European Commission page, or a supervisory authority's own site.
+  Blogs, law firm notes, news and secondary databases help you find the law;
+  cite the law itself.
+- Quotes are verbatim, in the source's language, at most 30 words, with
+  omissions marked `…`, and translated if not in English.
+- Every change is reviewed against the source ([Review](#review)).
 
 ## Report a wrong or outdated value
 
-If you see a value that is wrong or out of date and do not want to edit the file
-yourself, open an issue:
-
-1. Go to https://github.com/Rez-1/eaa-cite/issues/new/choose.
-2. Choose "Data correction".
-3. Fill in the form:
-   - the jurisdiction and the claim (for example Germany, `penalties`);
-   - what is wrong;
-   - the source URL and the pinpoint where the correct value is stated;
-   - the quote, word for word in the source's language.
-
-The quote and pinpoint matter most. With them the maintainer can check and fix
-the value quickly. Without them, the report starts a research task.
+Open an issue at https://github.com/Rez-1/eaa-cite/issues/new/choose, choose
+"Data correction", and give the jurisdiction and claim (for example Germany,
+`penalties`), what is wrong, and the source URL, pinpoint and quote that state
+the correct value. With the quote and pinpoint the fix is quick; without them
+the report starts a research task.
 
 ## Correct a value
 
-### Edit the jurisdiction file
+In `data/jurisdictions/<code>.json`:
 
-Each jurisdiction has one file in `data/jurisdictions/`: `eu.json`, `se.json`,
-`de.json`, `es.json`.
+1. Find the claim under `claims` ([claim ids](data-format.md#claim-list)) and
+   change its `value`.
+2. Change the citation with it: the `pinpoint` names where the new value is
+   stated, the `quote` is the text that states it, and the `translation` matches.
+3. If the citation needs a source not yet in the file,
+   [add it](#add-a-citation-or-a-source).
+4. Set the source's `retrievedAt` to the day you read it.
+5. Remove any `unverified` entry your change answers.
 
-1. Find the claim under `claims`. The claim ids are listed in
-   [data-format.md](data-format.md#claim-list).
-2. Change the `value`.
-3. Change the citation to match. A value and its citation change together: the
-   `pinpoint` must name where the new value is stated, and the `quote` must be the
-   text that states it. Update the `translation` too.
-4. If the citation points to a source that is not yet in the file, add it (see
-   [Add a citation or a source](#add-a-citation-or-a-source)).
-5. On the source you read, set `retrievedAt` to today's date, as `YYYY-MM-DD`.
-6. If the old value had an entry in `unverified` that your change answers,
-   remove it.
+On GitHub without installing anything: open the file (for example
+https://github.com/Rez-1/eaa-cite/blob/main/data/jurisdictions/de.json), click the
+pencil icon and accept the fork, make the change, choose "Commit changes" then
+"Propose changes", and open the pull request. Its template asks which sources you
+checked and whether you updated `retrievedAt`.
 
-Keep the JSON valid: double quotes around every string, commas between items, no
-comma after the last item in a list.
-
-Check field names against [data-format.md](data-format.md). A misspelt field or
-claim id stops the file loading, and the error names the key, for example
-`claims: Unrecognized key: "penalty"`.
-
-### Edit on GitHub without installing anything
-
-1. Open the file on GitHub, for example
-   https://github.com/Rez-1/eaa-cite/blob/main/data/jurisdictions/de.json.
-2. Click the pencil icon ("Edit this file"). GitHub offers to fork the
-   repository; accept.
-3. Make your change.
-4. Click "Commit changes", write a one-line description, and choose "Propose
-   changes".
-5. Open the pull request. The template asks which sources you checked and
-   whether you updated `retrievedAt`.
-
-The checks then run on GitHub for you:
-
-- `ci` loads every file and runs the tests. A broken file shows the problem list
-  described in the next section.
-- `verify-sources` runs because the pull request touches `data/`. It fetches
-  every source and checks every quote is still there, including yours. Sources
-  on www.gesetze-im-internet.de are skipped in CI
-  ([why](verification.md#the-monthly-job)); the maintainer checks a German change
-  locally.
-
-If this is your first pull request to the repository, the maintainer may need to
-approve the checks before they run. If a check fails, open it ("Details") to read
-the message, edit the file again on your fork's branch, and the checks run again.
+The checks then run for you. `ci` loads every file and runs the tests.
+`verify-sources` fetches every source and looks for every quote, including yours;
+sources on www.gesetze-im-internet.de are skipped in CI
+([why](verification.md#the-monthly-job)), so the maintainer checks a German
+change locally. A first-time contributor's checks may need the maintainer's
+approval. If a check fails, open its "Details", fix the file on your branch, and
+the checks run again.
 
 ### Check your change locally
 
-If you have Node 22 and a clone of the repository (see
-[install.md](install.md)):
+With Node 22 and a clone ([install.md](install.md)):
 
 ```bash
-npm run cli -- check-data data/jurisdictions/es.json   # the load rules, on one file
-npm test                 # loads every file and checks the editorial rules
-npm run verify-sources   # fetches every source and checks every quote
+npm run cli -- check-data data/jurisdictions/es.json   # the load rules, one file
+npm test                 # every file, plus the editorial rules
+npm run verify-sources   # every quote against its live source
 ```
 
-`check-data` is the quickest: it checks just the file you edited and lists every
-problem, without running the whole test suite. See [cli.md](cli.md#check-data).
-
-If a file breaks a load rule, you get a `DatasetIntegrityError` that names the
-file and lists every problem at once, one per line
-([example](data-format.md#load-rules)). Each line starts with the path to the
-problem. `claims.penalties.citations[0]`
-is the first citation of the `penalties` claim (counting starts at 0).
-`sources.0.language` is the `language` of the first source. Fix every line,
-then run the tests again. The list of rules and their messages is in
-[data-format.md](data-format.md#load-rules).
-
-If a file loads but breaks an editorial rule, `npm test` reports a failed test,
-for example a quote over 30 words. See
-[data-format.md](data-format.md#editorial-rules).
-
-For what `verify-sources` reports, see [verification.md](verification.md).
+A file that breaks a [load rule](data-format.md#load-rules) gets one problem per
+line, each starting with its path: `claims.penalties.citations[0]` is the first
+citation of `penalties` (counting from 0), `sources.0.language` the `language`
+of the first source. A file that loads but breaks an
+[editorial rule](data-format.md#editorial-rules), such as a quote over 30 words,
+fails `npm test`. What `verify-sources` reports is in
+[verification.md](verification.md).
 
 ## Add a citation or a source
 
-A claim can have more than one citation, for example when one provision sets the
-rule and another sets the amounts.
-
-To add a source, add an entry to the file's `sources` list:
+Add the source to the file's `sources`, then cite it by `id` from a claim:
 
 ```json
-{
-  "id": "bfsg-38",
-  "title": "BFSG § 38 Übergangsbestimmungen",
-  "kind": "consolidated-text",
-  "url": "https://www.gesetze-im-internet.de/bfsg/__38.html",
-  "language": "de",
-  "retrievedAt": "2026-11-08",
-  "verify": "quote"
-}
+{ "id": "bfsg-38", "title": "BFSG § 38 Übergangsbestimmungen", "kind": "consolidated-text",
+  "url": "https://www.gesetze-im-internet.de/bfsg/__38.html", "language": "de",
+  "retrievedAt": "2026-11-08", "verify": "quote" }
 ```
-
-- Pick an `id` that says what the source is: lower-case letters, digits and
-  hyphens, unique in the file. Follow the file's pattern: `bfsg-38` for BFSG
-  § 38, `sfs-2023-254` for SFS 2023:254, `ley-11-2023` for Ley 11/2023.
-- Choose the `kind` from the six in
-  [data-format.md](data-format.md#source-kinds).
-- Add `identifier` if the document has an official one (CELEX, SFS, BGBl, BOE).
-- Add a `note` for anything a reader should know, such as "The authority
-  describing itself. Not a designating provision."
-
-Choose `verify` ([data-format.md](data-format.md#quote-or-manual-verification)):
-`quote` almost always. Use `manual` only if a script cannot read the page, and
-say why in the `note`. A `manual` source is re-checked by a person, so prefer
-another official URL for the same text if there is one.
-
-Then cite it from a claim, by `id`:
 
 ```json
-{
-  "source": "bfsg-38",
-  "pinpoint": "BFSG § 38 Absatz 2",
-  "quote": "…",
-  "translation": "…"
-}
+{ "source": "bfsg-38", "pinpoint": "BFSG § 38 Absatz 2", "quote": "…", "translation": "…" }
 ```
 
-Every source must be cited at least once, and every citation must name a listed
-source. A file that breaks either rule does not load.
-
-A source on a new website, even an official one, does not load until its host
-is added to `src/dataset/officialHosts.ts`. The maintainer does that; say in the
-pull request that the host is new.
+Follow the file's `id` pattern (`bfsg-38`, `sfs-2023-254`, `ley-11-2023`), pick
+the [kind](data-format.md#source-kinds), and add `identifier` and `note` where
+they apply. Choose `verify: "quote"` almost always; use `manual` only if a script
+cannot read the page, say why in the `note`, and prefer another official URL for
+the same text if one exists
+([why](data-format.md#quote-or-manual-verification)). Every source must be cited
+and every citation must name a listed source. A source on a new host does not
+load until the host is added to `src/dataset/officialHosts.ts`; the maintainer
+does that, so say in the pull request that the host is new.
 
 ## Record something you could not confirm
 
-If you looked for something and could not confirm it from an official source,
-add a sentence to the file's `unverified` list instead of writing a claim.
+Add a sentence to `unverified` instead of writing a claim: what is missing,
+where you looked, and why it is not recorded. Do not guess a value or cite a
+secondary source to fill the gap.
 
 ```json
-"unverified": [
-  "Regional (autonomous community) penalty amounts that may displace the State regime under RDL 1/2013 art. 78: not checked."
-]
+"unverified": ["Regional (autonomous community) penalty amounts that may displace the State regime under RDL 1/2013 art. 78: not checked."]
 ```
-
-Say what is missing, where you looked, and why it is not recorded. Do not guess
-a value and do not cite a secondary source to fill the gap. A clear "not
-confirmed" is more useful to a reader than a value nobody can check. See
-[data-format.md](data-format.md#unverified).
 
 ## Add a jurisdiction
 
-Any EU member state can be added, and nothing outside the EU
-([data-format.md](data-format.md#allowed-jurisdiction-codes)). Start by opening a "New jurisdiction" issue
-(https://github.com/Rez-1/eaa-cite/issues/new/choose) so the work is not done
-twice.
+Any EU member state can be added
+([codes](data-format.md#allowed-jurisdiction-codes)). Open a "New jurisdiction"
+issue first, so the work is not done twice.
 
-### Research checklist
+For each claim, find the provision in the transposing law and quote it. Required:
+`applicationDate`, `microenterpriseExemption`, `microenterpriseDefinition`,
+`presumptionOfConformity` (and whether it names an EN 301 549 version),
+`penalties` and `transitionalServiceContracts`. Optional, if the law has them:
+`supervisoryAuthority` (and where the authority is designated),
+`transitionalSelfServiceTerminals` and `nationalStandardReference`. What each
+holds is in the [claim list](data-format.md#claim-list).
 
-For each claim, find the provision in the transposing law and quote it. The
-required claims are:
+Sources: the law on the official legislation or gazette site, the consolidated
+text where one is published, the designating ordinance for the authority, and the
+authority's own site only for what only it says. Note in each source what the
+consolidated text is consolidated to, and list amendments you did not check in
+`unverified`. If a required claim has no source, open the pull request anyway
+and say so; the maintainer decides. An optional claim without a source is left
+out and listed in `unverified`.
 
-| Claim | What to find |
-|---|---|
-| `applicationDate` | The commencement provision that applies the obligations from 28 June 2025. |
-| `microenterpriseExemption` | The provision exempting microenterprises that provide services. |
-| `microenterpriseDefinition` | The definition of a microenterprise: headcount, turnover and balance sheet thresholds, and how they combine. |
-| `presumptionOfConformity` | The provision giving a presumption of conformity through harmonised standards, and whether it names an EN 301 549 version. |
-| `penalties` | The penalty provisions: currency, the highest fine stated, any tiers. |
-| `transitionalServiceContracts` | The transition for service contracts concluded before 28 June 2025: a date, or a period. |
+To create the file, copy `se.json` (the smallest) to `<code>.json` in lower case
+(Greece is `gr.json`), set `jurisdiction`, `name` and `instrument`, replace the
+sources, claims and `unverified`, and remove any `harmonisation` block.
 
-The optional claims, if the law has them:
+Three places in code must change before it loads; leave them to the maintainer if
+you do not write code, and list the languages, currency and hosts in the pull
+request:
 
-| Claim | What to find |
-|---|---|
-| `supervisoryAuthority` | Which body supervises e-commerce services, and where the law or ordinance designates it. |
-| `transitionalSelfServiceTerminals` | How long existing self-service terminals may stay in use. |
-| `nationalStandardReference` | A national standard the law points to separately. |
+- `PUBLISHED` in `src/dataset/index.ts`;
+- the `language` and `currency` enums in `src/dataset/schema.ts`, for a new
+  language (today `en`, `sv`, `de`, `es`) or currency (`EUR`, `SEK`);
+- `OFFICIAL_SOURCE_HOSTS` in `src/dataset/officialHosts.ts`.
 
-Which sources qualify: the law on the official national legislation or gazette
-site; the consolidated text where the state publishes one; the designating
-ordinance for the authority; the authority's own site for what only it says.
-
-When a claim has no source: if it is required, open the issue or pull request
-anyway and say which claim you could not source; the maintainer decides how to
-proceed. If it is optional, leave it out and add an entry to `unverified`.
-
-Laws are often amended. Note in each source's `note` what the consolidated text
-is consolidated to, as `se.json` does, and list amendments you did not check in
-`unverified`.
-
-### Create the jurisdiction file
-
-1. Copy an existing file. `se.json` is the smallest.
-2. Name the copy after the two-letter code in lower case, for example
-   `data/jurisdictions/fr.json` for France. Greece is `gr.json`.
-3. Set `jurisdiction` to the code in upper case (`"FR"`), `name` to the English
-   name, and `instrument` to the transposing law's title in its own language.
-4. Replace the sources, claims and `unverified` with your own.
-5. Remove any `harmonisation` block. Only the EU file has one.
-
-### Register it in code
-
-Three places outside the data must change before the new file loads and passes
-the tests:
-
-- `PUBLISHED` in `src/dataset/index.ts`, the list of files that are loaded;
-- the `language` enum in `src/dataset/schema.ts` if the law is in a language not
-  yet listed (today `en`, `sv`, `de`, `es`), and the `currency` enum if the fines
-  are in a currency not yet listed (today `EUR`, `SEK`);
-- `OFFICIAL_SOURCE_HOSTS` in `src/dataset/officialHosts.ts`, for each new website.
-
-If you do not write code, leave these to the maintainer. Say in the pull request
-that the jurisdiction is new, and list the languages, currency and domains it
-uses.
-
-### Checks before opening a pull request
-
-Run the three commands in [Check your change locally](#check-your-change-locally).
-The file must load, pass the editorial rules, and have every quote found on its
-live page. If you cannot run `verify-sources`, the check on the pull request does
-it for you.
+Before the pull request, run the three commands in
+[Check your change locally](#check-your-change-locally).
 
 ## Review
 
-The owner reviews every change to the legal content. For each changed claim the
-review checks:
+The owner reviews every change to legal content. For each changed claim: the
+source is official and opens; the pinpoint names the provision; the quote is
+there word for word; the translation is faithful and a machine translation is
+marked ([rule](data-format.md#translations)); the value reads the quote
+correctly; `retrievedAt` is the day the source was read; and anything uncertain
+is in `unverified`.
 
-- the source is official and the URL opens;
-- the pinpoint names the provision that states the value;
-- the quote is there, word for word;
-- the translation is faithful, and a machine translation is marked as one
-  ([data-format.md](data-format.md#translations));
-- the value reads the quote correctly;
-- `retrievedAt` is the date the source was read;
-- anything left uncertain is in `unverified`, not in a claim.
-
-When there is a disagreement about how to read the law, the primary text
-settles it. Arguments rest on the words of the law at the pinpoint, not on
-commentary or on what other countries do. If the text does not settle it, the
-point goes in `unverified` until a source does.
+A disagreement about the law is settled by the primary text at the pinpoint, not
+by commentary or other countries' practice. If the text does not settle it, the
+point goes in `unverified`.
 
 ## Credit and licence
 
-Everything in `data/` is under the Creative Commons Attribution 4.0 licence (CC
-BY 4.0); see [DATA-LICENSE](../DATA-LICENSE). By contributing to `data/` you
-agree that your contribution is published under that licence. Quoted legislation
-remains the work of its publishers and is quoted to identify each provision.
-
-Contributors are credited by name in the contributors section of
-[CHANGELOG.md](../CHANGELOG.md), in the release that includes their change. Say
-in your pull request or issue how you would like to be named.
+Everything in `data/` is CC BY 4.0 ([DATA-LICENSE](../DATA-LICENSE)); by
+contributing you agree to publish under it. Quoted legislation remains its
+publishers' work. Contributors are credited by name in
+[CHANGELOG.md](../CHANGELOG.md); say in your pull request how you would like to
+be named.

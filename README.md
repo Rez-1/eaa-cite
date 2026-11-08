@@ -87,7 +87,7 @@ node dist/cli/main.js scan https://shop.example/   # failures by EN 301 549 clau
 node dist/cli/main.js obligations de penalties     # the value, its article and quote
 ```
 
-The four commands are in [docs/cli.md](docs/cli.md).
+The four commands are in [docs/usage.md](docs/usage.md).
 
 As a library:
 
@@ -100,44 +100,14 @@ conformanceFor("SE").status; // "not_cited"
 
 ## Documentation
 
-Use it:
-
-- [docs/install.md](docs/install.md): requirements, install from source, update, uninstall
-- [docs/mcp-setup.md](docs/mcp-setup.md): Claude Desktop, Claude Code, troubleshooting
-- [docs/tools.md](docs/tools.md): every tool and resource, with inputs, outputs and errors
-- [docs/cli.md](docs/cli.md): the `eaa-cite` command: scan, obligations, compare, check-data
-- [docs/library.md](docs/library.md): the TypeScript API
+- [docs/install.md](docs/install.md): install from source, then [add the server to a client](docs/mcp-setup.md)
+- [docs/usage.md](docs/usage.md): every tool, command and library function, and how to read what they return
+- [docs/limitations.md](docs/limitations.md): what the data and the scans do not cover; common questions are in the [FAQ](docs/faq.md)
+- [docs/contributing-data.md](docs/contributing-data.md): correct or add data, with links to the file format and source verification
+- [docs/architecture.md](docs/architecture.md): the code, the [decision records](docs/adr) and the [system it came from](docs/case-study.md)
 - [docs/guarded.md](docs/guarded.md): `eaa-cite/guarded`, the spend-capped LLM wrapper (a sample)
-
-Read the results:
-
-- [docs/results.md](docs/results.md): how to read a scan report, an obligations answer and a conformance answer
-- [docs/limitations.md](docs/limitations.md): what the data and the scans do not cover
-- [docs/faq.md](docs/faq.md): common questions, including how this compares with other tools
 - [examples/README.md](examples/README.md): the test shop and its results
-
-Contribute data:
-
-- [docs/contributing-data.md](docs/contributing-data.md): report or correct a value, add a jurisdiction
-- [docs/data-format.md](docs/data-format.md): every field in a jurisdiction file and the rules it must pass
-
-Check the data:
-
-- [docs/verification.md](docs/verification.md): how each quote is checked against its source, and the monthly job
-
-Read the code:
-
-- [docs/architecture.md](docs/architecture.md): layout, data flow, modules, testing, design decisions
-- [docs/adr/](docs/adr): the six architecture decision records
-- [docs/case-study.md](docs/case-study.md): the private audit system this came from
-- [CONTEXT.md](CONTEXT.md): the glossary
-
-Project:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- [SECURITY.md](SECURITY.md)
-- [CHANGELOG.md](CHANGELOG.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and the glossary, [CONTEXT.md](CONTEXT.md)
 
 ## Not legal advice
 

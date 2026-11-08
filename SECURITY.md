@@ -26,7 +26,7 @@ Reports are acknowledged within 7 days.
 `localhost` and private network addresses. A scan that starts at a public
 address may not navigate to a private one. `scan_html` runs markup in an offline
 browser context, and the test suite checks each refused request type against a
-local server. The full rules are in [docs/tools.md](docs/tools.md#scan_url); the
+local server. The full rules are in [docs/tools.md](docs/usage.md#what-scan_url-may-load); the
 code is `src/scan/scanner.ts` and `src/scan/privateHost.ts`.
 
 Known gaps in those rules:

@@ -21,7 +21,7 @@ how the data records it.
 Call `conformance_statement` with the country. It returns a fixed sentence and
 `mayClaimPresumptionOfConformity`, which is `true` only when the status is
 `cited`. The wording is fixed in code and is not generated.
-[docs/results.md](results.md) explains each field.
+[docs/results.md](usage.md#conformance-answer) explains each field.
 
 ## Why is my country not included?
 
@@ -61,7 +61,7 @@ did not check instead. See
 ## A scan found nothing failing. Is the page accessible?
 
 Not necessarily. axe checks a subset of WCAG, and most criteria need a person.
-See [results.md](results.md#what-a-scan-can-and-cannot-tell-you).
+See [results.md](usage.md#what-a-scan-can-and-cannot-tell-you).
 
 ## Why axe-core and no other scanner?
 
@@ -80,7 +80,7 @@ LLM calls, but the server does not use it.
 The lookup tools and the two resources make no network requests. `scan_url`
 loads the URL you give it in headless Chromium, and the page loads its own
 resources as in any browser. `scan_html` runs markup in an offline browser
-context, so it cannot call out. The rules are in [tools.md](tools.md#scan_url),
+context, so it cannot call out. The rules are in [tools.md](usage.md#what-scan_url-may-load),
 and what they mean for where you run the server is in
 [SECURITY.md](../SECURITY.md).
 

@@ -4,7 +4,7 @@ How to add the eaa-cite server to an MCP client. Install and build it first:
 [install.md](install.md).
 
 `dist/mcp/bin.js` is an MCP server that talks over stdio. Its six tools and two
-resources are described in [tools.md](tools.md). It has been used with Claude
+resources are described in [tools.md](usage.md). It has been used with Claude
 Desktop and Claude Code.
 
 In every example below, replace `/absolute/path/to/eaa-cite` with the folder you
@@ -96,7 +96,7 @@ tool in the prompt.
 | "Scan http://localhost:3000 for accessibility problems." | `scan_url` | Failing criteria by EN clause, criteria needing review, and the criteria axe did not check |
 | "Check this HTML for accessibility problems: `<img src="a.png">`" | `scan_html` | 9.1.1.1 Non-text Content failing on `image-alt`, plus 9.2.4.2 Page Titled and 9.3.1.1 Language of Page, because a bare fragment has no title or `lang` |
 
-For what the answers mean, see [results.md](results.md).
+For what the answers mean, see [results.md](usage.md).
 
 ## Troubleshooting
 
@@ -136,9 +136,9 @@ Scan errors come back as text starting `Scan failed:`.
   on purpose; serve the files over HTTP, or pass the markup to `scan_html`.
 - The scan started at a public address and was sent to a private one. The
   message starts `Refused to load`. Start the scan at the private address
-  directly if you mean to scan it ([tools.md](tools.md#scan_url)).
+  directly if you mean to scan it ([tools.md](usage.md#what-scan_url-may-load)).
 
-Every scan error is listed under [`scan_url` in tools.md](tools.md#scan_url).
+Every scan error is listed under [usage.md](usage.md#scan-errors).
 
 ### Where to find logs
 
