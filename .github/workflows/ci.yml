@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # The whole job takes about a minute; anything near this limit is a hang.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,4 +22,5 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Server starts and answers over stdio
+        timeout-minutes: 3
         run: npm run demo

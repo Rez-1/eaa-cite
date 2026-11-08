@@ -70,6 +70,12 @@ Data retrieved 2026-11-08.
 - Documentation in `docs/`, plus `CONTRIBUTING.md`, `SECURITY.md`,
   `CODE_OF_CONDUCT.md` and this changelog.
 
+### Fixed
+
+- The stdio server now exits when its client closes stdin. Before, a server that
+  had started Chromium kept running after the client left, so each MCP session
+  left a server and a browser behind, and the CI step that runs the demo hung.
+
 ## Contributors
 
 Each person whose code, data or docs change is merged is listed here by name.
