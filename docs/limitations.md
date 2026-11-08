@@ -69,8 +69,8 @@ without reading the source language. Cite the original text, not the translation
 - A weekly job re-reads every source and fails if a quote is gone. It does not
   catch a law changed in a place no quote covers. See
   [docs/verification.md](verification.md).
-- The tests fail once any source is more than 365 days old, so stale data cannot
-  pass CI unnoticed.
+- The weekly job also flags any source retrieved more than 365 days ago, so
+  stale data opens an issue even if every quote is still there.
 
 A law can change on any day. Between two runs of the weekly job, the data can be
 up to a week behind the source, and a change outside the quoted passages can go
@@ -107,7 +107,8 @@ That rule covers the page's own navigations only. A public page's images,
 scripts, frames and requests made by its scripts load as in a normal browser,
 wherever they point.
 
-`scan_html` blocks every network request the markup makes.
+`scan_html` runs the markup in an offline browser context: HTTP requests,
+WebSockets, prefetch and service workers are all refused.
 
 If the server runs where it can reach internal services, an assistant can still
 ask it to scan them directly. See [SECURITY.md](../SECURITY.md).
@@ -116,8 +117,9 @@ ask it to scan them directly. See [SECURITY.md](../SECURITY.md).
 
 The criteria table is EN 301 549 v3.2.1 clause 9: the 50 WCAG 2.1 success
 criteria at levels A and AA. WCAG 2.2 additions and level AAA criteria are outside
-it. A scan reports failures under them in `outsideClause9`, and
-`explain_criterion` says they are not clause 9 criteria.
+it. A scan runs the WCAG 2.2 AA rules too and reports their failures in
+`outsideClause9`; AAA rules are not run. `explain_criterion` says these are not
+clause 9 criteria.
 
 The conformance sentence defaults to "EN 301 549 v3.2.1" and "WCAG 2.1 AA". You
 can pass other version strings, but the criteria table and the scan mapping stay

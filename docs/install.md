@@ -103,9 +103,9 @@ npm run build
 Then restart your MCP client so it starts the new server. If a Playwright update
 needs a newer Chromium, run `npx playwright install chromium` again.
 
-Releases are git tags with GitHub releases. A change to the data bumps the minor
-version, and [CHANGELOG.md](../CHANGELOG.md) records the date the data was
-retrieved. Read it to see which values changed.
+There are no tagged releases yet, so updating means pulling `main`.
+[CHANGELOG.md](../CHANGELOG.md) records what changed, including the date the
+data was retrieved.
 
 ## Uninstall
 

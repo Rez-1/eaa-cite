@@ -89,9 +89,10 @@ problems; an empty list means the rule holds. To add one:
    `problemsLoading`.
 3. Run `npm test` to confirm every shipped file still loads.
 
-A rule that depends on the date or on judgement (quote length, source age,
-official domains) belongs in the `editorial rules on the shipped data` block of
-`test/dataset.test.ts`, not in the loader.
+A rule that depends on judgement (quote length) belongs in the `editorial rules
+on the shipped data` block of `test/dataset.test.ts`, not in the loader. A rule
+that depends on the date (source age) belongs in `scripts/verify-sources.ts`, so
+no test starts failing on its own as time passes.
 
 ### Recording a decision
 

@@ -5,7 +5,13 @@ model once the daily cap, or the cap for the call's scope, is reached. The check
 runs before the request is built, so no model output can affect it. Every call
 writes a ledger row whatever happens: success, refusal, output that fails the
 schema, or an API error. Rows for failed calls keep the tokens spent on earlier
-attempts.
+attempts. A call refused by a cap writes no row: no model was called.
+
+The limit holds for calls made one after another. Calls started at the same
+moment each read the same spend before any of them records its cost, so
+together they can pass the cap. Holding it under concurrency needs a ledger that
+reserves an estimated cost before the call; that is not built, and the owner
+decides whether it is needed.
 
 ## Why
 

@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-Only the latest tagged release gets fixes. Until the first release is tagged,
-fixes go to the `main` branch.
+The project is pre-release: there are no tagged versions. Fixes go to the `main`
+branch.
 
 ## Report a vulnerability
 
@@ -26,8 +26,8 @@ The two scan tools behave differently on the network:
 
 | Tool | What it can reach |
 |---|---|
-| `scan_url` | Loads any `http` or `https` URL it is given in headless Chromium, including `localhost` and private network addresses. A scan that starts at a public address follows up to 10 redirects and refuses to navigate to a private address. The page loads its own resources as a normal browser would. |
-| `scan_html` | Loads the markup it is given and blocks every network request the markup makes. |
+| `scan_url` | Loads any `http` or `https` URL it is given in headless Chromium, including `localhost` and private network addresses. A scan that starts at a public address follows up to 10 redirects and refuses to navigate to a private address. Popups are refused. The page loads its own images, scripts and frames as a normal browser would. |
+| `scan_html` | Loads the markup it is given in an offline browser context: HTTP requests, WebSockets, prefetch and service workers are all refused, and the test suite checks each of them against a local server. |
 
 The rules for `scan_url` are in `src/scan/scanner.ts`:
 
@@ -41,8 +41,20 @@ The rules for `scan_url` are in `src/scan/scanner.ts`:
   and one to a private address stops the scan with `BlockedNavigationError`.
 - The check covers the page's own navigations only. Images, scripts, frames and
   requests made by the page's scripts are not checked.
-- The check resolves the name separately from Chromium, so a name whose DNS
-  answer changes between the two lookups can get past it.
+- The check resolves the name separately from the fetch, so a name whose DNS
+  answer changes between the two lookups (DNS rebinding) can get past it.
+
+Limits that apply to every scan:
+
+- The page's main document is fetched by Node, not the browser, and is refused
+  above 20 MB (counted after decompression).
+- A whole scan has a deadline of twice the navigation timeout (60 seconds by
+  default), so a page that keeps axe busy cannot hold a tool call open.
+- There is no limit on how many scans run at once. Each uses its own browser
+  context in one shared Chromium.
+- A scan report contains text the page controls: selectors built from its ids
+  and classes (cut to 120 characters) and its final URL. An assistant should
+  treat the report as data, not instructions; the report's own caveat says so.
 
 The lookup tools and the two resources read only the checked-in data and make no
 network requests.
@@ -73,9 +85,9 @@ network requests.
 
 ## Out of scope
 
-- `scan_url` loading a private address it was given directly, or a public page
-  loading resources from a private address. This is the documented behaviour
-  above.
+- `scan_url` loading a private address it was given directly, a public page
+  loading resources from a private address, DNS rebinding, or many scans run at
+  once. These are documented above.
 - Errors in the legal data. Report those as a data correction instead; see
   [docs/contributing-data.md](docs/contributing-data.md).
 - Vulnerabilities in dependencies (Chromium, Playwright, axe-core, the MCP SDK)

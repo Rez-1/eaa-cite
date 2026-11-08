@@ -192,7 +192,9 @@ import { createScanner } from "eaa-cite";
 
 const scanner = createScanner({ timeoutMs: 15_000 });
 try {
-  const html = await readFile("test/fixtures/shop-with-defects.html", "utf8");
+  // Any HTML file of yours. Inside a clone of this repository,
+  // test/fixtures/shop-with-defects.html gives the output below.
+  const html = await readFile("page.html", "utf8");
   const report = await scanner.scanHtml(html);
   for (const c of report.failing) {
     console.log(c.enClause, c.name, c.rules.map((r) => r.ruleId).join(", "));

@@ -96,8 +96,8 @@ accepts any http or https URL, including `localhost` and private network
 addresses. A scan that starts at a public address follows redirects but refuses
 to navigate to a private one. See [docs/limitations.md](limitations.md).
 
-`scan_html` blocks every network request the markup makes, so pasted markup
-cannot call out.
+`scan_html` runs pasted markup in an offline browser context (HTTP, WebSockets,
+prefetch and service workers are all refused), so it cannot call out.
 
 Your MCP client and its model see the tool results. That is up to the client, not
 this server.

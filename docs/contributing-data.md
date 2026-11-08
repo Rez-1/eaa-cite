@@ -258,7 +258,7 @@ the tests:
 - the `language` enum in `src/dataset/schema.ts` if the law is in a language not
   yet listed (today `en`, `sv`, `de`, `es`), and the `currency` enum if the fines
   are in a currency not yet listed (today `EUR`, `SEK`);
-- the official-domain pattern in `test/dataset.test.ts`, for each new website.
+- `OFFICIAL_SOURCE_HOSTS` in `src/dataset/officialHosts.ts`, for each new website.
 
 If you do not write code, leave these to the maintainer. Say in the pull request
 that the jurisdiction is new, and list the languages, currency and domains it
@@ -266,12 +266,12 @@ uses.
 
 ### Checks before opening a pull request
 
-- The file loads: every citation names a listed source, every source is cited,
-  every non-English quote is translated, and `jurisdiction` matches the file
-  name. See [data-format.md](data-format.md#load-rules).
-- The editorial rules hold: quotes of 30 words or fewer, `retrievedAt` within the
-  last year, official domains only, `applicationDate` of `2025-06-28`. See
-  [data-format.md](data-format.md#editorial-rules).
+- The file loads (`npm run cli -- check-data <file>`): every citation names a
+  listed source, every source is cited and on an official host, every
+  non-English quote is translated, and `jurisdiction` matches the file name. See
+  [data-format.md](data-format.md#load-rules).
+- The editorial rules hold: quotes of 30 words or fewer and an `applicationDate`
+  of `2025-06-28`. See [data-format.md](data-format.md#editorial-rules).
 - Every quote is on its live page: `npm run verify-sources` reports `ok` for each
   `quote` source. If you cannot run it, the `verify-sources` check on the pull
   request does it for you.

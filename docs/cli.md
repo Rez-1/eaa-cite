@@ -35,8 +35,10 @@ node dist/cli/main.js scan https://shop.example/
 node dist/cli/main.js scan page.html
 ```
 
-A URL is scanned in headless Chromium. A local file is scanned as HTML with
-every network request blocked. The same rules apply as for the
+A URL is scanned in headless Chromium. A local file is scanned as HTML in an
+offline browser context, so its external stylesheets, images and scripts do
+not load: a contrast result can differ from the live page, and the report's URL
+reads `about:blank (inline HTML)`, not the file name. The same rules apply as for the
 [`scan_url`](tools.md#scan_url) tool, including the redirect rule for private
 addresses.
 
@@ -104,5 +106,5 @@ data/jurisdictions/es.json loads: ES, 9 claims, 16 citations, 3 sources.
 ```
 
 A file that does not load gets every problem at once, one line each, and exit
-code 1. Editorial rules (quote length, source age, official domains) are not
-part of this check; `npm test` runs those.
+code 1. This includes the official-host rule. Quote length is checked by
+`npm test`, and source age by `npm run verify-sources`.

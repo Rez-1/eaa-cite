@@ -81,6 +81,8 @@ call.
   block and the member state's own law.
 - `quotes.ts`: reduces HTML to readable text and matches a quote against it.
   Used by `scripts/verify-sources.ts`.
+- `officialHosts.ts`: the hosts a source may be on. A load rule enforces it, and
+  `verify-sources` follows redirects only between these hosts.
 
 ### standards
 
@@ -101,12 +103,16 @@ W3C names, and no ETSI text ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi
 
 - `scanner.ts`: `createScanner` owns Chromium. It launches the browser on the
   first scan, launches again after a failed launch or a crash, runs axe-core with
-  the WCAG 2.1 A and AA tags, and returns the scan report with its caveat. It
-  also holds `assertScannableUrl`, which refuses anything but http and https,
-  and `openWithRedirectRule`, which follows redirects one hop at a time and
-  refuses a private address after a public start.
+  the WCAG 2.1 A and AA tags plus WCAG 2.2 AA, and returns the scan report with
+  its caveat. Each scan has a deadline and reports errors in one line. It also
+  holds `assertScannableUrl`, which refuses anything but http and https, and
+  `openWithRedirectRule`, which follows redirects one hop at a time, refuses
+  popups, and refuses a private address after a public start.
+- `fetchDocument.ts`: fetches each main-frame document in Node, without
+  following redirects and with a 20 MB cap, so the browser never receives an
+  unbounded body.
 - `privateHost.ts`: `isPrivateHost`, the private-address check behind the
-  redirect rule.
+  redirect rule. The resolver is a parameter, so its tests need no DNS.
 - `axeTags.ts`: reads WCAG numbers out of axe rule tags.
 - `map.ts`: `mapToClauses` sorts an axe result into failing, needs review and
   not checked by axe. It is pure, so it is tested without a browser.

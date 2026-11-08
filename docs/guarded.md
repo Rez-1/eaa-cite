@@ -125,6 +125,14 @@ When the check fails no model call is made and no ledger row is written. The
 check happens once per `runStructured` call, not before each retry, so a call
 that starts under the cap can finish over it by the cost of its retries.
 
+The cap also assumes calls run one after another. The check reads spend, the
+call runs, and the spend is recorded afterwards, with nothing reserved in
+between, so calls started at the same moment all see the same spend and can all
+pass: ten parallel calls against a $1 cap can spend $10. To hold a cap under
+concurrency, run calls through a queue, or use a ledger that reserves an
+estimated cost before the call and settles it after. That reservation is not
+built (see [ADR 0006](adr/0006-spend-caps-are-code.md)).
+
 Money is integer micro-USD (one millionth of a dollar). `costMicros(rate, usage)`
 computes a run's cost:
 

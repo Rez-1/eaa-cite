@@ -5,8 +5,9 @@ All notable changes to this project are recorded here. The format follows
 
 ## Versioning
 
-- Releases are git tags with a matching GitHub release, made by the maintainer.
-  The package is not published to npm.
+- Pre-release: nothing is tagged yet; track `main`. Once releases start they will
+  be git tags with a matching GitHub release, made by the maintainer. The package
+  is not published to npm.
 - A change to `data/` bumps the minor version. Each release that changes data
   records the date the data was retrieved.
 - `eaa-cite/guarded` is a sample and has no stability promise.
@@ -73,6 +74,36 @@ Data retrieved 2026-11-08.
   `CODE_OF_CONDUCT.md` and this changelog.
 
 ### Fixed
+
+Found by five independent reviews of the public repository:
+
+- A scanned page that called `window.open` crashed the MCP server. Popups are now
+  refused.
+- `scan_html` let WebSockets and `<link rel=prefetch>` reach the network. Its
+  browser context is now offline, with WebSockets and service workers refused.
+- One scan could use gigabytes of memory on an endless response. Documents are
+  now fetched with a 20 MB cap, and a whole scan has a deadline.
+- Scan errors carried Playwright's call log with request headers; they are one
+  line now.
+- The private-address check missed 6to4, SIIT, local-use NAT64, fec0::/10,
+  192.0.0.0/24 and 198.18.0.0/15.
+- Selectors from the scanned page are cut to 120 characters, and the caveat says
+  scan output is data, not instructions.
+- WCAG 2.2 AA rules were never run, though the docs said their failures were
+  reported; they run now, under `outsideClause9`.
+- A source URL could be any address, and `verify-sources` (which runs on data
+  pull requests) followed redirects anywhere. Sources must now be on an official
+  host, and redirects are followed only between those hosts.
+- The one-year staleness test would have failed every clone from 2027-11-09. The
+  check moved to `verify-sources`.
+- Installing from git produced no `dist/`; there is now a `prepare` script.
+- Germany's penalty tiers claimed a minimum of 0 that § 37 BFSG does not state.
+  Sweden's penalties now cite the minor-cases exemption. Spain's RDL 1/2013
+  source records its amendment by Ley 4/2026.
+- The test shop's needs-review and not-detectable lists were not enforced; they
+  are now checked against each page's `PLANTED` comments.
+- CI has a read-only permissions block, actions pinned to commit SHAs, and
+  Dependabot.
 
 - The stdio server now exits when its client closes stdin. Before, a server that
   had started Chromium kept running after the client left, so each MCP session

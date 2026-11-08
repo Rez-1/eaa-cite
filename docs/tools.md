@@ -303,9 +303,14 @@ Every scan error comes back as `isError: true` with text that starts
 | Public start navigated to a private address | `Scan failed: Refused to load <url>: it is a private network address, and the scan started at a public one. Start the scan at a private address (such as localhost) to scan private pages.` |
 | More than 10 redirects | `Scan failed: Stopped after 10 redirects from <start URL>` |
 | A redirect to a non-http scheme | `Scan failed: Only http and https URLs can be scanned, got "<target>"` |
-| Page did not reach `load` in 30 seconds | `Scan failed: ` followed by Playwright's timeout message for `page.goto` |
-| Page could not be reached | `Scan failed: ` followed by Playwright's network error, for example `route.fetch: connect ECONNREFUSED 127.0.0.1:9`. The server keeps running. |
-| Chromium not installed or cannot start | `Scan failed: ` followed by Playwright's launch error. Run `npx playwright install chromium`. |
+| Page did not reach `load` in 30 seconds | `Scan failed: ` followed by the first line of Playwright's timeout message for `page.goto` |
+| The whole scan took more than 60 seconds | `Scan failed: The scan did not finish within 60 seconds` |
+| Page could not be reached | `Scan failed: Could not load <url>: <reason>`, for example `connect ECONNREFUSED 127.0.0.1:9`. The server keeps running. |
+| The page's document is over 20 MB | `Scan failed: Refused to load <url>: the document is larger than 20 MB.` |
+| Chromium not installed or cannot start | `Scan failed: ` followed by the first line of Playwright's launch error. Run `npx playwright install chromium`. |
+
+Every message is one line. A popup the page opens is refused and does not
+fail the scan.
 
 ## scan_html
 

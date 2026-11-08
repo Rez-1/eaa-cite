@@ -108,7 +108,7 @@ A source is one official document that citations quote.
 | `title` | yes | The document's title. |
 | `identifier` | no | Its official identifier: CELEX number, SFS number, BGBl reference, BOE id. |
 | `kind` | yes | One of six values; see below. |
-| `url` | yes | Where the text can be read. Must be an official domain (see [Editorial rules](#editorial-rules)). |
+| `url` | yes | Where the text can be read: an `https` URL on an official host (see [Load rules](#load-rules)). |
 | `language` | yes | The language of the text at that URL: `en`, `sv`, `de` or `es`. |
 | `retrievedAt` | yes | The date someone last confirmed the quotes at that URL, as `YYYY-MM-DD`. |
 | `verify` | yes | `quote` or `manual`; see below. |
@@ -378,8 +378,8 @@ in `summary` and list what could not be found in `unverified`.
     "currency": "EUR",
     "maxFine": 100000,
     "tiers": [
-      { "label": "§ 37 Abs. 1 Nr. 1, 7, 8, 9, 10", "min": 0, "max": 100000 },
-      { "label": "other offences in § 37 Abs. 1", "min": 0, "max": 10000 }
+      { "label": "§ 37 Abs. 1 Nr. 1, 7, 8, 9, 10", "min": null, "max": 100000 },
+      { "label": "other offences in § 37 Abs. 1", "min": null, "max": 10000 }
     ]
   },
   …
@@ -391,9 +391,10 @@ in `summary` and list what could not be found in `unverified`.
 - `maxFine`: the highest fine the law states, in `currency`. `null` when it
   states none. The EU file has `null` for both, because the directive leaves
   amounts to member states.
-- `tiers`: optional. Each tier has a `label` and a `min` and `max`. Use the law's
-  own names for its tiers where it has them (`"graves (serious)"`). Use `0` for
-  `min` when the law states no minimum.
+- `tiers`: optional. Each tier has a `label`, a `min` and a `max`. Use the law's
+  own names for its tiers where it has them (`"graves (serious)"`). Use `null`
+  for `min` when the law states only a ceiling ("bis zu"): do not write a number
+  the law does not.
 
 A claim may cite several provisions. Spain's cites six: the act that points to
 the penalty regime, and each article of that regime.
@@ -549,6 +550,7 @@ Then the structural rules, with the exact problem each reports:
 | The file declares the jurisdiction it is named for. | `jurisdiction: declares DK, but the file is for SE` |
 | The EU file has a harmonisation block. | `harmonisation: the EU file must record the harmonisation status` |
 | No member state file has one. | `harmonisation: only the EU file records it; member states take the EU answer (ADR 0003)` |
+| Every source is an `https` URL on an official host, listed in `src/dataset/officialHosts.ts`: `eur-lex.europa.eu`, `single-market-economy.ec.europa.eu`, `www.riksdagen.se`, `www.gesetze-im-internet.de`, `www.bgbl.de`, `www.mlbf-barrierefrei.de`, `www.boe.es`. `verify-sources` fetches these URLs, so no other host may appear. | `sources: "bfsg-2" is not on an official host (http://…); see src/dataset/officialHosts.ts` |
 | Source ids are unique. | `sources: id "ley-11-2023" is listed twice` |
 | Every citation names a listed source. | `claims.penalties.citations[0]: names source "bfsg-99", which is not listed` |
 | Every source is cited at least once. | `sources: "orphan" is never cited` |
@@ -558,25 +560,29 @@ Citations in the EU harmonisation block are checked too; their paths start with
 `harmonisation.citations[…]`.
 
 These rules do not depend on the date or on judgement, so they can run every
-time the package loads. Rules that do depend on them are tests, below. A load
-check on source age would stop the package working a year after release.
+time the package loads. Quote length is judgement and is a test, below. Source
+age is checked by `verify-sources` ([verification.md](verification.md)): a load
+check or a test on the date would stop a copy working a year after release.
+
+Every object in the file is strict, so an unknown or misspelt key is also a load
+error.
 
 ## Editorial rules
 
-`test/dataset.test.ts` checks the shipped data against rules that depend on the
-date or on judgement. They run with `npm test` and in CI, never at load.
+`test/dataset.test.ts` checks the shipped data against rules that depend on
+judgement. They run with `npm test` and in CI, never at load.
 
 | Rule | Detail |
 |---|---|
 | Quotes are short. | At most 30 words per quote, counting the pieces either side of any `…`. Enough to check, not a reproduction of the text. |
-| Sources are recent. | Every `retrievedAt` is within the last 365 days and not in the future. A stale source fails with `<code> <id> is stale: run npm run verify-sources and update retrievedAt`. |
-| Sources are official. | Every source `url` starts with `https://` and one of: `eur-lex.europa.eu`, `single-market-economy.ec.europa.eu`, `www.riksdagen.se`, `www.gesetze-im-internet.de`, `www.bgbl.de`, `www.boe.es`, `www.mlbf-barrierefrei.de`. |
+| No source from the future. | No `retrievedAt` is after today. (Sources older than a year are flagged by `verify-sources`, not here.) |
 | Nothing outside the EU. | `GB` and `NO` are never in `PUBLISHED`. |
 | The application date. | `applicationDate.value.date` is `2025-06-28` in every published file. |
 | The status needs Official Journal evidence. | If the EU status is `cited`, one of its citations is a `legislation` source. |
 | A WAD citation alone never makes it `cited`. | If the EU harmonisation quotes mention 2016/2102, the status is not `cited`. |
 
-A new jurisdiction usually needs its official domains added to the list; see
+A new jurisdiction usually needs its official hosts added to
+`src/dataset/officialHosts.ts`; see
 [contributing-data.md](contributing-data.md#register-it-in-code).
 
 ## Clause 9 criteria table

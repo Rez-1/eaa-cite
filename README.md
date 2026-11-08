@@ -1,8 +1,14 @@
 # eaa-cite
 
-What the European Accessibility Act requires of an online shop, per member state,
-with every value tied to the article it comes from. Plus an MCP server that gives
-those answers to an AI assistant, and maps axe-core scan results onto EN 301 549.
+eaa-cite is a dataset and a tool for the European Accessibility Act (EAA), the EU
+law that requires online shops and other services to be accessible from June 2025.
+For the EU and three member states it records what the law requires, and every
+value carries a citation: the article, a verbatim quote and the official source.
+It also scans web pages with axe-core and files the results under the EN 301 549
+clauses they relate to. You can use it from the command line, as a TypeScript
+library, or as an MCP server that an AI assistant such as Claude can call.
+
+Pre-release: there are no tagged versions yet, so track `main`.
 
 ```
 > get_obligations { country: "DE" }  (penalties only)
@@ -68,7 +74,9 @@ npm run build
 claude mcp add eaa-cite -- node "$(pwd)/dist/mcp/bin.js"
 ```
 
-The last line adds the server to Claude Code. For Claude Desktop and other
+The last line adds the server to Claude Code. Its `scan_url` tool loads any URL
+the assistant gives it, including `localhost` and private network addresses, so
+only run it where that is fine (see [SECURITY.md](SECURITY.md)). For Claude Desktop and other
 clients, see [docs/mcp-setup.md](docs/mcp-setup.md). Full install notes are in
 [docs/install.md](docs/install.md).
 

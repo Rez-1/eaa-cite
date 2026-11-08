@@ -39,10 +39,16 @@ For each page it records:
 | `needsReview` | EN clauses axe should mark as undecided |
 | `notDetectable` | planted defects axe has no rule for, by WCAG number |
 
+| `needsReviewUnplanted` | needs-review clauses the first scan found that nobody planted (checkout's 9.2.4.1, Bypass Blocks) |
+
+`expected.json` is itself checked against the pages: each page's `failing`,
+`needsReview` and `notDetectable` must match its `PLANTED` comments exactly, so
+neither file can drift from the other.
+
 A page matches when every expected rule fails under every expected clause, no
-other rule fails, every expected needs-review clause appears, and no
-`notDetectable` criterion is reported as failing. An extra needs-review clause is
-reported but does not fail the match. The comparison is in
+other rule fails, every expected needs-review clause appears, the needs-review
+clauses nobody planted are exactly `needsReviewUnplanted`, and no
+`notDetectable` criterion is reported as failing. The comparison is in
 [`test/testShop.ts`](../test/testShop.ts), shared by `npm test` and `npm run try`.
 
 ## Run it

@@ -12,10 +12,22 @@ listed source, every source is cited, source ids are unique, non-English quotes 
 translated, and the file declares the jurisdiction it is named for. Callers only
 ever see citations with their source filled in.
 
-The rules that depend on the date or on judgement stay in `test/dataset.test.ts`:
-quotes under 30 words, nothing retrieved more than a year ago, official domains
-only. A load check on age would stop the published package working a year after
-release.
+Sources must be on an official host (`src/dataset/officialHosts.ts`), also a load
+rule, because `verify-sources` fetches every source URL. Quote length (under 30
+words) is judgement and stays a test. Age is checked by `verify-sources`, which
+flags any source retrieved more than a year ago; a load check or a unit test on
+the date would stop a published copy working a year after release.
+
+## What a citation does and does not prove
+
+The rules above prove that each value has a citation, that the citation's quote
+is on the cited page, and that the source is official. They do not prove that
+the value follows from the quote: a file whose maximum fine says 1 instead of
+100,000 would still load if the quote is intact. Matching values to quotes is
+review work, done by a person when a data change is merged
+([docs/contributing-data.md](../contributing-data.md#review)). The README's
+claim is that every value is tied to an article, not that a machine has checked
+the value against it.
 
 ## Why a link per law is not enough
 

@@ -217,8 +217,8 @@ reports and stops instead of guessing.
 
 Manual sources appear in every run's output and in the JSON with status
 `manual`. They do not fail the run, so nothing reminds you except that list and
-the age rule: `npm test` fails once any source's `retrievedAt` is more than 365
-days old.
+the age rule: once a source's `retrievedAt` is more than 365 days old, the run
+marks it `STALE` and fails, and the weekly job opens an issue.
 
 To re-check one:
 
