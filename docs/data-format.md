@@ -201,7 +201,8 @@ citations; and harmonisation quotes that mention 2016/2102 never make it `cited`
 PDF page of the clause heading). It holds no ETSI text
 ([ADR 0005](adr/0005-publish-clause-numbers-not-etsi-text.md)).
 
-`npm run build:criteria` downloads both documents, parses EN clauses 9.1 to 9.4
+`npm run build:criteria` (`scripts/build-criteria.ts`, with the parsers in
+`scripts/lib/criteriaSource.ts`) downloads both documents, parses EN clauses 9.1 to 9.4
 and the WCAG Recommendation, and throws on any disagreement or a criterion that
 is AAA or not in WCAG 2.1. It prints a line such as
 `50 criteria (A 30, AA 20) from 186 PDF pages` and overwrites the file. If

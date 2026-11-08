@@ -1,11 +1,5 @@
 # FAQ
 
-## What is this, in one sentence?
-
-A dataset of what the European Accessibility Act requires in four jurisdictions,
-with every value tied to a quote from the law, plus an MCP server that answers
-from it and files axe-core scan results under EN 301 549 clauses.
-
 ## Does meeting EN 301 549 mean a shop conforms to the EAA?
 
 No. As of 2026-11-08 no version of EN 301 549 is cited in the Official Journal
@@ -21,7 +15,7 @@ how the data records it.
 Call `conformance_statement` with the country. It returns a fixed sentence and
 `mayClaimPresumptionOfConformity`, which is `true` only when the status is
 `cited`. The wording is fixed in code and is not generated.
-[docs/results.md](usage.md#conformance-answer) explains each field.
+[docs/usage.md](usage.md#conformance-answer) explains each field.
 
 ## Why is my country not included?
 
@@ -61,7 +55,7 @@ did not check instead. See
 ## A scan found nothing failing. Is the page accessible?
 
 Not necessarily. axe checks a subset of WCAG, and most criteria need a person.
-See [results.md](usage.md#what-a-scan-can-and-cannot-tell-you).
+See [usage.md](usage.md#what-a-scan-can-and-cannot-tell-you).
 
 ## Why axe-core and no other scanner?
 
@@ -72,30 +66,19 @@ misses. See [ADR 0002](adr/0002-axe-core-is-the-only-scanner.md).
 ## Does the server use an AI model?
 
 No. Every lookup reads the checked-in data, and every scan runs axe-core. The
-same input gives the same output. The separate `eaa-cite/guarded` module wraps
-LLM calls, but the server does not use it.
+same input gives the same output.
 
 ## Does the server send my data anywhere?
 
 The lookup tools and the two resources make no network requests. `scan_url`
 loads the URL you give it in headless Chromium, and the page loads its own
 resources as in any browser. `scan_html` runs markup in an offline browser
-context, so it cannot call out. The rules are in [tools.md](usage.md#what-scan_url-may-load),
+context, so it cannot call out. The rules are in [usage.md](usage.md#what-scan_url-may-load),
 and what they mean for where you run the server is in
 [SECURITY.md](../SECURITY.md).
 
 Your MCP client and its model see the tool results. That is up to the client, not
 this server.
-
-## Which Node versions, systems and clients does it work with?
-
-Node 22, on Ubuntu (in CI) and macOS, with Claude Desktop and Claude Code as MCP
-clients. Nothing else has been tested. See [docs/install.md](install.md).
-
-## Is it on npm?
-
-No. Install it by cloning the repository and building it. See
-[docs/install.md](install.md).
 
 ## How does this compare with other tools?
 
@@ -106,9 +89,3 @@ the pinpoint and a verbatim quote.
 
 Several community MCP servers wrap axe-core for scanning. This one adds the
 mapping onto EN 301 549 clause 9 and the cited legal lookups.
-
-## Glossary
-
-The terms used across these docs (jurisdiction file, claim, citation, pinpoint,
-harmonisation status, conformance answer) are defined in
-[CONTEXT.md](../CONTEXT.md).

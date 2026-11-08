@@ -3,8 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Nothing is tagged yet; track `main`. Once releases start they will be git tags
 with a GitHub release. A change to `data/` bumps the minor version and records
-the date the data was retrieved. `eaa-cite/guarded` is a sample and has no
-stability promise.
+the date the data was retrieved.
 
 ## [Unreleased]
 
@@ -18,17 +17,17 @@ Data retrieved 2026-11-08.
 - The MCP server, the `eaa-cite` command, and axe-core scans mapped onto
   clause 9, with the redirect rule for `scan_url`.
 - The test shop with `expected.json`, `npm run demo` and `npm run try`.
-- `eaa-cite/guarded`: a spend-capped wrapper for structured LLM calls, with
-  `MemoryLedger`, `JsonlLedger`, a `ledgerContract` test for other ledgers, and
-  an Anthropic adapter that loads the SDK only when it is first called.
 - After review: fines must be in the jurisdiction's currency, every number and
   date in a value must appear in its citations, and citations can list `absent`
   phrases, used to notice an EAA standard citation on the Commission's page.
 
 ### Changed
 
-- The scanner moved to its own entry, `eaa-cite/scan`, so the package root no
-  longer loads Playwright.
+- The scanner moved to its own entry, `eaa-cite/scan/browser`, the only one
+  that loads Playwright. `eaa-cite/scan` holds the pure clause 9 mapping.
+- The spend-capped LLM wrapper was split out into its own package.
+- The criteria table's PDF and WCAG parsers moved to `scripts/`; they run only at
+  build time.
 - The scheduled source check runs monthly instead of weekly, and CI skips
   www.gesetze-im-internet.de, which drops connections from GitHub's runners.
 

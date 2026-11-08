@@ -8,7 +8,7 @@ eaa-cite is a research aid. It tells you what a law says and where it says it.
 It does not tell you what the law means for your site or your business.
 
 Check a value against its source before you rely on it
-([results.md](usage.md#check-a-citation-yourself)), and read the text around
+([usage.md](usage.md#check-a-citation-yourself)), and read the text around
 the quote: a quote under 30 words can miss a condition or an exception in the
 next sentence. For a decision that matters, ask a lawyer qualified in that
 jurisdiction.
@@ -71,10 +71,10 @@ the source. A change outside the quoted passages is not caught at all
 axe-core checks a subset of WCAG automatically. A scan with nothing failing is
 not evidence that a site conforms: most criteria still need a person. What a
 scan can and cannot tell you is in
-[results.md](usage.md#what-a-scan-can-and-cannot-tell-you).
+[usage.md](usage.md#what-a-scan-can-and-cannot-tell-you).
 
 `scan_url` loads any http or https URL, including private addresses, under the
-redirect rule in [tools.md](usage.md#what-scan_url-may-load). If the server can reach internal
+redirect rule in [usage.md](usage.md#what-scan_url-may-load). If the server can reach internal
 services, an assistant can ask it to scan them. See [SECURITY.md](../SECURITY.md).
 
 ## Standards versions

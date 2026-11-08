@@ -45,7 +45,6 @@ official source and fails if a quote is no longer there. The reasoning is in
   model runs inside it.
 - A TypeScript library with the same lookups and the scanner.
 - `npm run verify-sources`, which checks every quote against its live source.
-- `eaa-cite/guarded`, a sample wrapper for spend-capped structured LLM calls.
 
 ## The dataset at a glance
 
@@ -105,7 +104,6 @@ conformanceFor("SE").status; // "not_cited"
 - [docs/limitations.md](docs/limitations.md): what the data and the scans do not cover; common questions are in the [FAQ](docs/faq.md)
 - [docs/contributing-data.md](docs/contributing-data.md): correct or add data, with links to the file format and source verification
 - [docs/architecture.md](docs/architecture.md): the code, the [decision records](docs/adr) and the [system it came from](docs/case-study.md)
-- [docs/guarded.md](docs/guarded.md): `eaa-cite/guarded`, the spend-capped LLM wrapper (a sample)
 - [examples/README.md](examples/README.md): the test shop and its results
 - [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and the glossary, [CONTEXT.md](CONTEXT.md)
 

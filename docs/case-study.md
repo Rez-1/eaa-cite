@@ -19,13 +19,13 @@ save, not by model cost. Two checks guard the step that delivers a signed report
 
 | Here | In the private system |
 |------|----------------------|
-| `src/criteria/` | the parser that seeds the criteria table from the ETSI PDF and WCAG HTML |
+| `scripts/lib/criteriaSource.ts` | the parser that seeds the criteria table from the ETSI PDF and WCAG HTML |
 | `src/standards/harmonisation.ts` | the status type and conformance wording behind the first check |
 | `src/scan/` | the axe tag parser and the scan step of the browser worker |
-| `src/guarded/` | the agent wrapper, with its Postgres ledger swapped for an interface |
 | `docs/adr/` | rewritten from the private ADRs |
 
-The dataset of cited obligations is new: the private system records one verified
+The spend-capped agent wrapper was split out into its own package. The dataset
+of cited obligations is new: the private system records one verified
 answer per member state by hand, and publishing it meant giving every claim its
 article and quote.
 
